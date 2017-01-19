@@ -1,18 +1,18 @@
 ﻿  winmain.cpp
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2084): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2263): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2329): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2410): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2690): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2692): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2694): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2696): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2702): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2705): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2707): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2709): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2711): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2758): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(3477): warning C4244: 'argument': conversion from 'const int' to 'float', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(1973): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2152): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2218): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2299): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2574): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2576): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2578): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2580): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2586): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2589): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2591): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2593): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2595): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(2643): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+c:\users\dawid\documents\visual studio 2015\projects\d3d\d3d\winmain.cpp(3362): warning C4244: 'argument': conversion from 'const int' to 'float', possible loss of data
   D3D.vcxproj -> C:\Users\Dawid\documents\visual studio 2015\Projects\D3D\Debug\D3D.exe
   D3D.vcxproj -> C:\Users\Dawid\documents\visual studio 2015\Projects\D3D\Debug\D3D.pdb (Partial PDB)

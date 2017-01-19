@@ -29,7 +29,7 @@ public:
 IDirect3DVertexBuffer9* VB;
 IDirect3DIndexBuffer9* IB;
 D3DXMATRIX World;
-int const size = 80;
+int const size = 40;
 int const vbSize = size *size *size;
 VertexPositionColor  verts[8 * vbSize];
 WORD indices[36* vbSize];
@@ -108,29 +108,6 @@ void drawCube(float xx, float yy, float zz, D3DCOLOR color) {
 	indices[indiciesInd + 34] = 3 + vertInd;
 	indices[indiciesInd + 35] = 7 + vertInd;
 		
-
-		////right
-
-		//1, 5, 3,
-		//3, 5, 7,
-
-		////left
-
-		//4, 0, 6,
-		//6, 0, 2,
-
-		////top
-		//4, 5, 0,
-		//0, 5, 1,
-
-		////bottom
-		//2, 3, 6,
-		//6, 3, 7,
-
-
-
-
-
 	currentCube++;
 }
 
@@ -145,21 +122,10 @@ bool TestApp::Init()
 
 	m_pDevice3D->CreateIndexBuffer(36 * sizeof(WORD)*vbSize, D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_MANAGED, &IB, NULL);
 
-
-	
-
-	/*VB->Lock(0, sizeof(verts), (void**)&pVerts, 0);
-	memcpy(pVerts, verts, sizeof(verts));
-	VB->Unlock();*/
-
-	//IB->Lock(0, sizeof(indices), (void**)&pIndices, 0);
-	//memcpy(pIndices, indices, sizeof(indices));
-	//IB->Unlock();
-
 	D3DXMATRIX view;
 	D3DXMATRIX proj;
 
-	D3DXVECTOR3 position = D3DXVECTOR3(30, -40, -100.0f);
+	D3DXVECTOR3 position = D3DXVECTOR3(30, -40, -30.0f);
 	D3DXVECTOR3 target = D3DXVECTOR3(30,-40, 0);
 	D3DXVECTOR3 up = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
 
@@ -222,25 +188,25 @@ void TestApp::Render()
 	m_pDevice3D->SetIndices(IB);
 	m_pDevice3D->SetFVF(VertexPositionColor::FVF);
 
-	/*int first_prim = 0;
+	int first_prim = 0;
 	while (currentCube > 0)
 	{
-		int batch_size = 1000;
+		int batch_size = 2000;
 		int chunk;
 		if (currentCube <= batch_size)
 			chunk = currentCube;
 		else
 			chunk = batch_size;
-		m_pDevice3D->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, first_prim, 36 * (currentCube + 1), 0, 24 * batch_size);
+		m_pDevice3D->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 8 * first_prim, 0, 36 * (currentCube + 1), 0, 24 * batch_size);
 
 
 		first_prim += chunk;
 		currentCube -= chunk;
-	}*/
+	}
 
 	int curr = currentCube;
 
-	m_pDevice3D->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 0 , 0, 12*currentCube);
+	//m_pDevice3D->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 0 , 0, size*size*size*36);
 
 
 	m_pDevice3D->EndScene();
@@ -1399,7 +1365,7 @@ void CFluid::DiffusionLR(float *p_in, float *p_out, float scale)
 void CFluid::GlobalDiffusion(float *p_in, float *p_out, float scale)
 {
 	float a = scale * m_dt;
-	int size = m_w*m_h;
+	int size = m_w * m_h * m_d;
 	float tot = 0;
 	for (int cell = 0; cell<size; cell++)
 	{
@@ -1452,7 +1418,7 @@ void CFluid::CopyField(float *p_in, float *p_out)
 
 void CFluid::AddFields(float *p_a, float *p_b, float *p_out)
 {
-	int size = m_w * m_h;
+	int size = m_w * m_h * m_d;
 	for (int x = 0; x<size; x++)
 	{
 		p_out[x] = p_a[x] + p_b[x];
@@ -1461,7 +1427,7 @@ void CFluid::AddFields(float *p_a, float *p_b, float *p_out)
 
 void CFluid::SubFields(float *p_a, float *p_b, float *p_out)
 {
-	int size = m_w * m_h;
+	int size = m_w * m_h * m_d;
 	for (int x = 0; x<size; x++)
 	{
 		p_out[x] = p_a[x] - p_b[x];
@@ -1470,7 +1436,7 @@ void CFluid::SubFields(float *p_a, float *p_b, float *p_out)
 
 void CFluid::MulFields(float *p_a, float *p_b, float *p_out)
 {
-	int size = m_w * m_h;
+	int size = m_w * m_h * m_d;
 	for (int x = 0; x<size; x++)
 	{
 		p_out[x] = p_a[x] * p_b[x];
@@ -1479,7 +1445,7 @@ void CFluid::MulFields(float *p_a, float *p_b, float *p_out)
 
 void CFluid::MulField(float *p_a, float f, float *p_out)
 {
-	int size = m_w * m_h;
+	int size = m_w * m_h * m_d;
 	for (int x = 0; x<size; x++)
 	{
 		p_out[x] = p_a[x] * f;
@@ -1489,7 +1455,7 @@ void CFluid::MulField(float *p_a, float f, float *p_out)
 
 void CFluid::AddField(float *p_a, float f, float *p_out)
 {
-	int size = m_w * m_h;
+	int size = m_w * m_h * m_d;
 	for (int x = 0; x<size; x++)
 	{
 		p_out[x] = p_a[x] + f;
@@ -1502,13 +1468,13 @@ void CFluid::AddField(float *p_a, float f, float *p_out)
 
 void CFluid::ZeroField(float *p_field)
 {
-	int size = m_w*m_h;
+	int size = m_w * m_h * m_d;
 	memset((void*)p_field, 0, size * sizeof(float));
 }
 
 void CFluid::SetField(float *p_field, float f)
 {
-	int size = m_w * m_h;
+	int size = m_w * m_h * m_d;
 	for (int x = 0; x<size; x++)
 	{
 		p_field[x] = f;
@@ -1914,7 +1880,7 @@ void CFluid::VelocityFriction(float a, float b, float c)
 void CFluid::QuadraticDecay(float *p_in, float *p_out, float a, float b, float c)
 {
 	float dt = m_dt;
-	int size = m_w*m_h;
+	int size = m_w * m_h * m_d;
 	for (int cell = 0; cell<size; cell++)
 	{
 		float v = p_in[cell];
@@ -1931,7 +1897,7 @@ void CFluid::QuadraticDecay(float *p_in, float *p_out, float a, float b, float c
 void CFluid::ClampVelocity(float max_v)
 {
 	float max_v2 = max_v * max_v;
-	int size = m_w * m_h;
+	int size = m_w * m_h * m_d;
 	for (int cell = 0; cell < size; cell++)
 	{
 
@@ -1953,7 +1919,7 @@ void CFluid::ClampVelocity(float max_v)
 void CFluid::ForceFrom(float *p_from, float *p_to, float f)
 {
 	f *= m_dt;
-	int size = m_w * m_h;
+	int size = m_w * m_h * m_d;
 	for (int cell = 0; cell < size; cell++)
 	{
 		*p_to++ += *p_from++*f;
@@ -1963,7 +1929,7 @@ void CFluid::ForceFrom(float *p_from, float *p_to, float f)
 void CFluid::ApplyForce(float *p_to, float f)
 {
 	f *= m_dt;
-	int size = m_w * m_h;
+	int size = m_w * m_h * m_d;
 	for (int cell = 0; cell < size; cell++)
 	{
 		*p_to++ += f;
@@ -2162,7 +2128,7 @@ void CFluid::ReverseSignedAdvection(float *p_in, float*p_out, float scale)
 	// negate advection scale, since it's reverse advection
 	float a = -m_dt * scale;
 
-	int size = m_w*m_h;
+	int size = m_w*m_h*m_d;
 
 	// First copy the scalar values over, since we are adding/subtracting in values, not moving things
 	CopyField(p_in, p_out);
@@ -2569,11 +2535,6 @@ float CFluid::GetValue(float *p_in, float x, float y, float z)
 // render the array on screen as a bunch of rectangles
 void CFluid::Render(float x, float y, float w, float h)
 {
-
-
-	//	if (key_w)
-	//		return;
-
 	m_screen_x = x;
 	m_screen_y = y;
 	m_screen_w = w;
@@ -2678,7 +2639,8 @@ void CFluid::Render(float x, float y, float w, float h)
 					//DrawRect(x + x0 * wx, y + y0*wy, wx, wy, base + p0, base + p1, base + p2, base + p3);
 					D3DCOLOR col = base + p0;
 					//drawCube(x0, y0, z0, base + p0);
-					drawCube(x0, y0, z0, D3DCOLOR_ARGB(55, 255, 255, 255));
+			
+					drawCube(x0, y0, z0, D3DCOLOR_ARGB(p0+p2+p3, 255, 255, 255));
 				}
 			}
 		}
@@ -3349,8 +3311,8 @@ void TestApp::Update(float dt)
 	//	}
 	//}
 
-	g_fluid1.AddValue(g_fluid1.mp_ink0, 50, 50, 50, 5);
-	g_fluid1.AddValue(g_fluid1.mp_heat0, 50, 50, 50, 5);
+	g_fluid1.AddValue(g_fluid1.mp_ink0, 50, 50, 50, 500);
+	g_fluid1.AddValue(g_fluid1.mp_heat0, 50, 50, 50, 500);
 
 
 
@@ -3402,7 +3364,7 @@ if (has_focus)
 
 	updateBuffers();
 	
-	//GetMessage(&msg, NULL, 0, 0);
+	GetMessage(&msg, NULL, 0, 0);
 	MsgProc2(msg.hwnd, msg.message, msg.wParam, msg.lParam);
 		
 
