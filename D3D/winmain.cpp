@@ -1,5 +1,16 @@
 #include <Windows.h>
+#include <atlimage.h>
 #include "D3Dapp.h"
+
+int	key_left = 0;
+int key_right = 0;
+int key_up = 0;
+int key_down = 0;
+int key_w = 0;
+int key_a = 0;
+int key_s = 0;
+int key_d = 0;
+int key_space = 0;
 
 struct VertexPositionColor
 {
@@ -29,7 +40,7 @@ public:
 IDirect3DVertexBuffer9* VB;
 IDirect3DIndexBuffer9* IB;
 D3DXMATRIX World;
-int const size = 40;
+int const size = 60;
 int const vbSize = size *size *size;
 VertexPositionColor  verts[8 * vbSize];
 WORD indices[36* vbSize];
@@ -107,8 +118,13 @@ void drawCube(float xx, float yy, float zz, D3DCOLOR color) {
 	indices[indiciesInd + 33] = 6 + vertInd;
 	indices[indiciesInd + 34] = 3 + vertInd;
 	indices[indiciesInd + 35] = 7 + vertInd;
-		
-	currentCube++;
+	if (currentCube >= size*size*size) {
+		int d = currentCube;
+	}
+	else {
+
+		currentCube++;
+	}
 }
 
 bool TestApp::Init()
@@ -125,8 +141,8 @@ bool TestApp::Init()
 	D3DXMATRIX view;
 	D3DXMATRIX proj;
 
-	D3DXVECTOR3 position = D3DXVECTOR3(30, -40, -30.0f);
-	D3DXVECTOR3 target = D3DXVECTOR3(30,-40, 0);
+	D3DXVECTOR3 position = D3DXVECTOR3(2*size, -size /8, 2*size);
+	D3DXVECTOR3 target = D3DXVECTOR3(size /2, -size /2 , size / 2);
 	D3DXVECTOR3 up = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
 
 
@@ -157,7 +173,7 @@ bool TestApp::Init()
 
 void updateBuffers() {
 
-	
+
 
 	VB->Lock(0, sizeof(verts), (void**)&pVerts, 0);
 	memcpy(pVerts, verts, sizeof(verts));
@@ -171,6 +187,7 @@ void updateBuffers() {
 
 float rotY;
 float rotX;
+int frame_counter = 1;
 
 D3DXMATRIX Rx, Ry;
 
@@ -189,7 +206,7 @@ void TestApp::Render()
 	m_pDevice3D->SetFVF(VertexPositionColor::FVF);
 
 	int first_prim = 0;
-	while (currentCube > 0)
+	while (currentCube > 0 && currentCube < size*size*size)
 	{
 		int batch_size = 2000;
 		int chunk;
@@ -197,14 +214,23 @@ void TestApp::Render()
 			chunk = currentCube;
 		else
 			chunk = batch_size;
-		m_pDevice3D->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 8 * first_prim, 0, 36 * (currentCube + 1), 0, 24 * batch_size);
+
+		int curr = currentCube;
+
+		int s = sizeof(indices);
+
+		int fp8 = 8 * first_prim;
+		int cb136 = 36 * (batch_size);
+		int b8 = 8 * batch_size;
+
+ 		m_pDevice3D->DrawIndexedPrimitive(D3DPT_TRIANGLELIST,8 * first_prim, 0, 36 * (chunk), 0, 36 * chunk);
 
 
 		first_prim += chunk;
 		currentCube -= chunk;
 	}
 
-	int curr = currentCube;
+	
 
 	//m_pDevice3D->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 0 , 0, size*size*size*36);
 
@@ -212,23 +238,31 @@ void TestApp::Render()
 	m_pDevice3D->EndScene();
 
 	m_pDevice3D->Present(0, 0, 0, 0);
+	currentCube = 0;
+
+	RECT rect = { 0 };
+
+	GetWindowRect(m_hAppWindow, &rect);
+	ATL::CImage* image_ = new CImage();
+	image_->Create(rect.right - rect.left, rect.bottom - rect.top, 32);
+
+	HDC device_context_handle = image_->GetDC();
+	PrintWindow(m_hAppWindow, device_context_handle, PW_CLIENTONLY);
+	std::string path;
+	char sb[100];  // You had better have room for what you are sprintf()ing!
+	sprintf_s(sb, "C:\\Users\\Dawid\\Pictures\\smoke\\frame%d.jpg", frame_counter);
+	path = sb;
+
+	image_->Save(_T(path.c_str()), Gdiplus::ImageFormatJPEG);
+	frame_counter++;
+	image_->ReleaseDC();
+
+	delete image_;
 }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 float g_friction = 1.0f;
-
 
 
 #pragma warning(disable: 4995)          // don't warn about deprecated functions
@@ -278,17 +312,9 @@ bool	r_dragging = 0;
 int		mouse_x = 0;
 int		mouse_y = 0;
 
-int	key_left = 0;
-int key_right = 0;
-int key_up = 0;
-int key_down = 0;
-int key_w = 0;
-int key_a = 0;
-int key_s = 0;
-int key_d = 0;
-int key_space = 0;
 
-bool LineCircleIntersect(Vector3 &start, Vector3 &end, float radius, Vector3 &p1, Vector3 &p2);
+
+
 //
 //int	m_w = 60;
 //int	m_h = 60;
@@ -370,6 +396,42 @@ public:
 
 		if (z < 0) {
 			z = 0;
+		}
+
+
+
+		//if (x >= m_w - 1) {
+		//	x = m_w - 2;
+		//}
+
+		//if (y >= m_h - 1) {
+		//	y = m_h - 2;
+		//}
+
+		//if (z >= m_d - 1) {
+		//	z = m_d - 2;
+		//}
+
+
+
+
+
+
+
+
+
+
+
+		if (x >= m_w) {
+			x = m_w-1;
+		}
+
+		if (y >= m_h) {
+			y = m_h-1;
+		}
+
+		if (z >= m_d) {
+			z = m_d-1;
 		}
 		return x + m_w *y + m_w *m_h*z; }
 
@@ -518,38 +580,8 @@ float rndf(float f1, float f2)
 	return f1 + (f2 - f1)*(float)rnd() / 4294967296.0f;
 }
 
-#define GRID_W		20
-#define	GRID_H		20
 
 
-
-
-
-
-//-----------------------------------------------------------------------------
-// Function-prototypes for directinput handlers
-//-----------------------------------------------------------------------------
-BOOL CALLBACK    EnumObjectsCallback(const DIDEVICEOBJECTINSTANCE* pdidoi, VOID* pContext);
-BOOL CALLBACK    EnumJoysticksCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext);
-HRESULT InitDirectInput(HWND hDlg);
-VOID    FreeDirectInput();
-
-
-
-LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-
-//-----------------------------------------------------------------------------
-// Global variables
-//-----------------------------------------------------------------------------
-LPDIRECT3D9             g_pD3D = NULL; // Used to create the D3DDevice
-LPDIRECT3DDEVICE9       g_pd3dDevice = NULL; // Our rendering device
-LPDIRECT3DVERTEXBUFFER9 g_pVB = NULL; // Buffer to hold Vertices
-LPDIRECT3DVERTEXBUFFER9 g_pVB2 = NULL; // Another Buffer to hold Vertices for lines
-ID3DXFont*              g_pFont = NULL;
-
-RECT                    window_rect;
-int                     g_window_width, g_window_height;
 
 //inline float  scale_x(float x) {return x * (float)g_window_width / (float) g_viewport_width;}
 //inline float  scale_y(float y) {return y * (float)g_window_height / (float) g_viewport_height;}
@@ -557,11 +589,6 @@ inline float  scale_x(float x) { return x; }
 inline float  scale_y(float y) { return y; }
 inline float  scale_z(float z) { return z; }
 
-struct CUSTOMVERTEX
-{
-	FLOAT x, y, z, rhw; // The transformed position for the vertex
-	DWORD color;        // The vertex color
-};
 
 // Our custom FVF, which describes our custom vertex structure
 #define D3DFVF_CUSTOMVERTEX (D3DFVF_XYZRHW|D3DFVF_DIFFUSE)
@@ -601,80 +628,6 @@ void Timer_Resume()
 	BaseTime.QuadPart += (UnPausedTime.QuadPart - PausedTime.QuadPart);
 }
 
-// Buffers for lines and triangles 
-CUSTOMVERTEX *g_pTriVerts;
-const int MAX_TRIS = 5000000;
-int	g_nTris = 0;
-
-CUSTOMVERTEX *g_pLineVerts;
-const int MAX_LINES = 500000;
-int	g_nLines = 0;
-
-
-//-----------------------------------------------------------------------------
-// Name: InitD3D()
-// Desc: Initializes Direct3D
-//-----------------------------------------------------------------------------
-HRESULT InitD3D(HWND hWnd)
-{
-	if (NULL == g_pD3D)
-	{
-		// Create the D3D object.
-		if (NULL == (g_pD3D = Direct3DCreate9(D3D_SDK_VERSION)))
-			return E_FAIL;
-	}
-
-	// We might be re-creating the font and device, so release them if so.
-	if (g_pFont != NULL)
-	{
-		g_pFont->Release();
-		g_pFont = NULL;
-	}
-	if (g_pd3dDevice != NULL)
-	{
-		g_pd3dDevice->Release();
-		g_pd3dDevice = NULL;
-	}
-
-	// Set up the structure used to create the D3DDevice
-	D3DPRESENT_PARAMETERS d3dpp;
-	ZeroMemory(&d3dpp, sizeof(d3dpp));
-
-	d3dpp.BackBufferWidth = g_window_width;
-	d3dpp.BackBufferHeight = g_window_height;
-
-	d3dpp.Windowed = TRUE;
-	d3dpp.SwapEffect = D3DSWAPEFFECT_FLIP;
-	d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
-
-	d3dpp.MultiSampleType = D3DMULTISAMPLE_NONE;
-	d3dpp.MultiSampleQuality = D3DMULTISAMPLE_NONE;
-	d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE; //D3DPRESENT_INTERVAL_ONE;
-																//d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
-
-																// Create the D3DDevice
-	if (FAILED(g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
-		D3DCREATE_SOFTWARE_VERTEXPROCESSING,
-		&d3dpp, &g_pd3dDevice)))
-	{
-		return E_FAIL;
-	}
-
-
-	if (FAILED(D3DXCreateFont(g_pd3dDevice, 15, 0, FW_NORMAL, 1, FALSE, DEFAULT_CHARSET,
-		OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
-		(LPCSTR)"Arial", &g_pFont)))
-	{
-		return E_FAIL;
-	}
-
-	//D3DVIEWPORT9 viewData = { 0, 0, 100, 100, 0.0f, 1.0f };
-
-	//g_pd3dDevice->SetViewport(&viewData);
-	return S_OK;
-}
-
-
 
 const int max_strings = 200;
 const int max_string_length = 255;
@@ -701,465 +654,9 @@ void    DrawString(float x, float y, const char *p_text, DWORD color = 0xff00000
 }
 
 
-//-----------------------------------------------------------------------------
-// Name: InitVB()
-// Desc: Creates a vertex buffer and fills it with our Vertices. The vertex
-//       buffer is basically just a chuck of memory that holds Vertices. After
-//       creating it, we must Lock()/Unlock() it to fill it. For indices, D3D
-//       also uses index buffers. The special thing about vertex and index
-//       buffers is that they can be created in device memory, allowing some
-//       cards to process them in hardware, resulting in a dramatic
-//       performance gain.
-//-----------------------------------------------------------------------------
-HRESULT InitVB()
-{
-
-	g_pTriVerts = new CUSTOMVERTEX[MAX_TRIS * 3];
-	g_nTris = 0;
-	g_pLineVerts = new CUSTOMVERTEX[MAX_LINES * 2];
-	g_nLines = 0;
-
-	// Create the vertex buffer.  We also
-	// specify the FVF, so the vertex buffer knows what data it contains.
-	if (FAILED(g_pd3dDevice->CreateVertexBuffer(MAX_TRIS * sizeof(CUSTOMVERTEX),
-		0, D3DFVF_CUSTOMVERTEX,
-		D3DPOOL_DEFAULT, &g_pVB, NULL)))
-	{
-		return E_FAIL;
-	}
-	if (FAILED(g_pd3dDevice->CreateVertexBuffer(MAX_LINES * sizeof(CUSTOMVERTEX),
-		0, D3DFVF_CUSTOMVERTEX,
-		D3DPOOL_DEFAULT, &g_pVB2, NULL)))
-	{
-		return E_FAIL;
-	}
-
-
-	return S_OK;
-}
-
-
-HRESULT FillVB()
-{
-	// Now we fill the vertex buffer. To do this, we need to Lock() the VB to
-	// gain access to the Vertices. This mechanism is required becuase vertex
-	// buffers may be in device memory.
-	VOID* pVertices;
-	if (FAILED(g_pVB->Lock(0, g_nTris * sizeof(CUSTOMVERTEX), (void**)&pVertices, 0)))
-		return E_FAIL;
-	memcpy(pVertices, g_pTriVerts, g_nTris * sizeof(CUSTOMVERTEX));
-	g_pVB->Unlock();
-
-	//// Repeat for lines    
-	//if (FAILED(g_pVB2->Lock(0, g_nLines * sizeof(CUSTOMVERTEX), (void**)&pVertices, 0)))
-	//	return E_FAIL;
-	//memcpy(pVertices, g_pLineVerts, g_nLines * sizeof(CUSTOMVERTEX));
-	//g_pVB->Unlock();
-
-	return S_OK;
-}
-
-//-----------------------------------------------------------------------------
-// Name: Cleanup()
-// Desc: Releases all previously initialized objects
-//-----------------------------------------------------------------------------
-VOID Cleanup()
-{
-	if (g_pVB != NULL)
-		g_pVB->Release();
-	if (g_pVB2 != NULL)
-		g_pVB2->Release();
-
-	if (g_pFont != NULL)
-		g_pFont->Release();
-
-	if (g_pd3dDevice != NULL)
-		g_pd3dDevice->Release();
-
-	if (g_pD3D != NULL)
-		g_pD3D->Release();
-
-	if (g_pTriVerts != NULL)
-		delete g_pTriVerts;
-	if (g_pLineVerts != NULL)
-		delete g_pLineVerts;
-
-}
-
-
-
-//-----------------------------------------------------------------------------
-// Name: Render()
-// Desc: Draws the scene
-//-----------------------------------------------------------------------------
-VOID Render()
-{
-	// Clear the backbuffer to a neutral color
-	//g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(180,180,200), 1.0f, 0 );
-	//g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0,0,0), 1.0f, 0 );
-	g_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(255, 0, 0), 1.0f, 0);
-
-	// Begin the scene
-	if (SUCCEEDED(g_pd3dDevice->BeginScene()))
-	{
-
-
-
-
-		
-		// Refill the VB, allowing us to draw whatever
-		FillVB();
-
-		//g_pd3dDevice->SetStreamSource( 0, g_pVB, 0, sizeof(CUSTOMVERTEX) );
-		//g_pd3dDevice->SetFVF( D3DFVF_CUSTOMVERTEX );
-		//g_pd3dDevice->DrawPrimitive( D3DPT_TRIANGLELIST, 0, g_nTris/3 );
-
-
-		static int batch_size = 200;  // number of triangles to send at once
-
-									  //batch_size = g_Caps.MaxPrimitiveCount/3;
-
-		int tris_left = g_nTris / 3;
-		g_pd3dDevice->SetStreamSource(0, g_pVB, 0, sizeof(CUSTOMVERTEX));
-		g_pd3dDevice->SetFVF(D3DFVF_CUSTOMVERTEX);
-		g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-
-		int first_prim = 0;
-
-		while (tris_left > 0)
-		{
-			int chunk;
-			if (tris_left <= batch_size)
-				chunk = tris_left;
-			else
-				chunk = batch_size;
-
-			// Render the triangle list vertex buffer contents
-			g_pd3dDevice->DrawPrimitive(D3DPT_TRIANGLELIST, first_prim * 3, chunk);
-			first_prim += chunk;
-			tris_left -= chunk;
-		}
-
-
-		// And the lines
-		g_pd3dDevice->SetStreamSource(0, g_pVB2, 0, sizeof(CUSTOMVERTEX));
-		g_pd3dDevice->SetFVF(D3DFVF_CUSTOMVERTEX);
-		g_pd3dDevice->DrawPrimitive(D3DPT_LINELIST, 0, g_nLines / 2);
-
-		RECT rc;
-		for (int i = 0; i<num_draw_strings; i++)
-		{
-			SetRect(&rc, (int)texts_to_draw[i].x, (int)texts_to_draw[i].y, 0, 0);
-			g_pFont->DrawText(NULL, (LPCSTR)texts_to_draw[i].text, -1, &rc, DT_NOCLIP, texts_to_draw[i].color);
-		}
-		num_draw_strings = 0;
-
-		// and reset
-		g_nTris = 0;
-		g_nLines = 0;
-		g_pd3dDevice->SetTransform(D3DTS_WORLD, &World);
-
-		// End the scene
-		g_pd3dDevice->EndScene();
-	}
-
-	// Present the backbuffer contents to the display
-	g_pd3dDevice->Present(0, 0, 0, 0);
-}
-
 void	InitFluids();
 
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-// Windows application initialization and message handling
-// Based on DirectX SDK example applications
 
-
-
-////-----------------------------------------------------------------------------
-//// Name: WinMain()
-//// Desc: The application's entry point
-////-----------------------------------------------------------------------------
-//INT WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, INT)
-//{
-//	// Register the window class
-//	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, MsgProc, 0L, 0L,
-//		GetModuleHandle(NULL), NULL, NULL, NULL, NULL,
-//		"Fluid", NULL };
-//	RegisterClassEx(&wc);
-//
-//	InitializeCriticalSection(&debug_CS);
-//
-//	// Create the application's window
-//	HWND hWnd = CreateWindow("Fluid", "Mick West: Fluid Physics Example",
-//		WS_OVERLAPPEDWINDOW, 0, 0, g_viewport_width, g_viewport_height,
-//		GetDesktopWindow(), NULL, wc.hInstance, NULL);
-//
-//	// Get the size of the renderable rectangle
-//	GetClientRect(hWnd, &window_rect);
-//	g_window_width = window_rect.right - window_rect.left;
-//	g_window_height = window_rect.bottom - window_rect.top;
-//
-//	debug_log("ClientRect g_window Window = %dx%d", g_window_width, g_window_height);
-//
-//
-//
-//
-//	if (SUCCEEDED(InitD3D(hWnd)))
-//	{
-//		if (SUCCEEDED(InitVB()))
-//		{
-//			ShowWindow(hWnd, SW_SHOWDEFAULT);
-//			UpdateWindow(hWnd);
-//
-//
-//
-//			InitFluids();
-//
-//			// Enter the message loop
-//			MSG msg;
-//			ZeroMemory(&msg, sizeof(msg));
-//			Timer_Init();
-//			while (msg.message != WM_QUIT)
-//			{
-//				if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
-//				{
-//					TranslateMessage(&msg);
-//					DispatchMessage(&msg);
-//				}
-//				else
-//				{
-//					if (has_focus)
-//					{
-//						static float fps = 0.0f;
-//						float   start = Timer_Seconds();
-//						static float last_time = 0.0f;
-//						float time_step = start - last_time;
-//						last_time = start;
-//
-//						// clamp timestep to 1/50th of a second max
-//						if (time_step > 0.02)
-//							time_step = 0.02f;
-//
-//						float fluid_start = Timer_Seconds();
-//						float fluid_start1 = Timer_Seconds();
-//						g_fluid1.Update(time_step*1.0f);
-//						float fluid_end1 = Timer_Seconds();
-//
-//						float fluid_start2 = Timer_Seconds();
-//
-//						float fluid_end2 = Timer_Seconds();
-//
-//						g_fluid1.MouseInput();
-//						mouse_x += 510;
-//						mouse_x -= 510;
-//						float fluid_end = Timer_Seconds();
-//
-//						Render();
-//
-//						char buf[100];
-//						sprintf(buf, "FPS = %4.2f, update1 = %.4f, update2 = %.4f", fps, fluid_end1 - fluid_start1, fluid_end2 - fluid_start2);
-//						DrawString(5, 20, buf, 0xff202020);
-//						sprintf(buf, "SPACE = Pause, A = Display Velocity, S = Reset, D = Display Gradient, W = Display Density");
-//						DrawString(300, 20, buf, 0xff202020);
-//						float end = Timer_Seconds();
-//						fps = 1.0f / (end - start);
-//					}
-//					else
-//					{
-//						Sleep(1);
-//					}
-//
-//				}
-//			}
-//		}
-//	}
-//
-//	UnregisterClass("Fluid", wc.hInstance);
-//	return 0;
-//}
-
-// end of Windows Stuff
-
-// The following function uses the directX wrapper stuff directly
-
-// triangle with clockwise ordered points
-void DrawTri(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, DWORD color)
-{
-	if (g_nTris > MAX_TRIS - 3)
-	{
-		// Error - run out of triangle buffer
-	}
-
-	g_pTriVerts[g_nTris + 0].x = scale_x(x0);
-	g_pTriVerts[g_nTris + 0].y = scale_y(y0);
-	g_pTriVerts[g_nTris + 0].z = scale_z(z0);
-	g_pTriVerts[g_nTris + 0].rhw = 1.0f;
-	g_pTriVerts[g_nTris + 0].color = color;
-
-	g_pTriVerts[g_nTris + 1].x = scale_x(x1);
-	g_pTriVerts[g_nTris + 1].y = scale_y(y1);
-	g_pTriVerts[g_nTris + 1].z = scale_z(z1);
-	g_pTriVerts[g_nTris + 1].rhw = 1.0f;
-	g_pTriVerts[g_nTris + 1].color = color;
-
-	g_pTriVerts[g_nTris + 2].x = scale_x(x2);
-	g_pTriVerts[g_nTris + 2].y = scale_y(y2);
-	g_pTriVerts[g_nTris + 2].z = scale_z(z2);
-	g_pTriVerts[g_nTris + 2].rhw = 1.0f;
-	g_pTriVerts[g_nTris + 2].color = color;
-
-	g_nTris += 3;
-
-}
-
-void DrawTri(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, DWORD color0, DWORD color1, DWORD color2)
-{
-	if (g_nTris > MAX_TRIS - 3)
-	{
-		// Error - run out of triangle buffer
-	}
-
-	g_pTriVerts[g_nTris + 0].x = scale_x(x0);
-	g_pTriVerts[g_nTris + 0].y = scale_y(y0);
-	g_pTriVerts[g_nTris + 0].z = scale_z(z0);
-	g_pTriVerts[g_nTris + 0].rhw = 1.0f;
-	g_pTriVerts[g_nTris + 0].color = color0;
-
-	g_pTriVerts[g_nTris + 1].x = scale_x(x1);
-	g_pTriVerts[g_nTris + 1].y = scale_y(y1);
-	g_pTriVerts[g_nTris + 1].z = scale_z(z1);
-	g_pTriVerts[g_nTris + 1].rhw = 1.0f;
-	g_pTriVerts[g_nTris + 1].color = color1;
-
-	g_pTriVerts[g_nTris + 2].x = scale_x(x2);
-	g_pTriVerts[g_nTris + 2].y = scale_y(y2);
-	g_pTriVerts[g_nTris + 2].z = scale_z(z2);
-	g_pTriVerts[g_nTris + 2].rhw = 1.0f;
-	g_pTriVerts[g_nTris + 2].color = color2;
-
-	g_nTris += 3;
-
-}
-
-
-void DrawLine2(float x0, float y0, float x1, float y1, DWORD color0, DWORD color1)
-{
-	if (g_nLines > MAX_LINES - 2)
-	{
-		// Error - run out of line buffer
-	}
-	g_pLineVerts[g_nLines + 0].x = scale_x(x0);
-	g_pLineVerts[g_nLines + 0].y = scale_y(y0);
-	g_pLineVerts[g_nLines + 0].z = 0.5f;
-	g_pLineVerts[g_nLines + 0].rhw = 1.0f;
-	g_pLineVerts[g_nLines + 0].color = color0;
-
-	g_pLineVerts[g_nLines + 1].x = scale_x(x1);
-	g_pLineVerts[g_nLines + 1].y = scale_y(y1);
-	g_pLineVerts[g_nLines + 1].z = 0.5f;
-	g_pLineVerts[g_nLines + 1].rhw = 1.0f;
-	g_pLineVerts[g_nLines + 1].color = color1;
-
-	g_nLines += 2;
-}
-
-
-void DrawLine(float x0, float y0, float x1, float y1, DWORD color = 0xff000000)
-{
-	//DrawLine2(x0, y0, x1, y1, color, color);
-}
-
-void	DrawDiamond(float x, float y, int w, DWORD color = 0xff000000)
-{
-	//DrawTri(x - w, y, x, y - w, x + w, y, color);
-	//DrawTri(x + w, y, x, y + w, x - w, y, color);
-
-}
-
-void DrawDiamond(Vector3 pos, int w, DWORD color = 0xff000000)
-{
-	//DrawDiamond(pos.x, pos.y, w, color);
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////////
-// Basic 2d Primitive rendering code - Triangles and Lines
-
-
-void DrawLine(Vector3 start, Vector3 end, DWORD color)
-{
-	//DrawLine(start.x, start.y, end.x, end.y, color);
-}
-
-
-void DrawX(Vector3 pos, float size, DWORD color)
-{
-	//DrawLine(pos.x - size, pos.y - size, pos.x + size, pos.y + size, color);
-	//x`DrawLine(pos.x - size, pos.y + size, pos.x + size, pos.y - size, color);
-}
-
-// Draw a quad with four points in clockwise order
-void DrawQuad(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, DWORD color)
-{
-	//DrawTri(x0, y0, x1, y1, x2, y2, color);
-	//DrawTri(x2, y2, x3, y3, x0, y0, );
-}
-
-// Draw a quad with four points in clockwise order per-vert color
-void DrawQuad(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, DWORD color0, DWORD color1, DWORD color2, DWORD color3)
-{
-	DrawTri(x0, y0, 0, x1, y1, 0, x2, y2, 0, color0, color1, color2);
-	DrawTri(x2, y2, 0, x3, y3, 0, x0, y0, 0, color2, color3, color0);
-}
-
-
-// Draw an axis aligned rectangle
-void DrawRect(float x, float y, float w, float h, DWORD color)
-{
-	//DrawQuad(x, y, x + w, y, x + w, y + h, x, y + h, color);
-}
-
-void DrawCube(float x, float y, float z, float w, float h, float d, DWORD color0, DWORD color1, DWORD color2, DWORD color3)
-{
-	//color0 = D3DCOLOR_ARGB(color0, 255, 255, 25);
-	//color1 = D3DCOLOR_ARGB(color0, 255, 255, 25);
-	//color2 = D3DCOLOR_ARGB(color0, 255, 255, 25);
-	//color3 = D3DCOLOR_ARGB(color0, 255, 255, 25);
-
-	DrawTri(x, y, z, x + w, y, z, x + w, y + h, z, color0, color1, color2);
-	DrawTri(x + w, y + h, z, x, y + h, z, x, y, z, color2, color3, color0);
-
-	DrawTri(x, y, z + d, x + w, y, z + d, x + w, y + h, z + d, color0, color1, color2);
-	DrawTri(x + w, y + h, z + d, x, y + h, z + d, x, y, z + d, color2, color3, color0);
-
-	DrawTri(x, y, z, x, y, z + d, x, y + h, z + d, color0, color1, color2);
-	DrawTri(x, y + h, z + d, x, y + h, z, x, y, z, color2, color3, color0);
-
-	DrawTri(x + w, y, z, x + w, y, z + d, x + w, y + h, z + d, color0, color1, color2);
-	DrawTri(x + w, y + h, z + d, x + w, y + h, z, x + w, y, z, color2, color3, color0);
-
-	DrawTri(x, y, z, x + w, y, z, x + w, y, z + d, color0, color1, color2);
-	DrawTri(x + w, y, z + d, x, y, z + d, x, y, z, color2, color3, color0);
-
-	DrawTri(x, y + h, z, x + w, y + h, z, x + w, y + h, z + d, color0, color1, color2);
-	DrawTri(x + w, y + h, z + d, x, y + h, z + d, x, y + h, z, color2, color3, color0);
-}
-
-// Draw an axis aligned rectangle
-void DrawRect(float x, float y, float w, float h, DWORD color0, DWORD color1, DWORD color2, DWORD color3)
-{
-	float z = 264;
-	float d = 1124;
-
-	//DrawQuad(x, y, x + w, y, x + w, y + h, x, y + h, color0, color1, color2, color3);
-
-	DrawCube(x, y, z, w, h, d, color0, color1, color2, color3);
-}
 
 
 
@@ -1285,45 +782,64 @@ void CFluid::Diffusion(float *p_in, float *p_out, float scale)
 
 	float a = m_dt * scale;
 	int cell;
-#if 0
-	// Copy edge as not diffusing into edge
-	CopyEdge(p_in, p_out);
-#else
-	// top and bot edges
+//#if 0
+//	// Copy edge as not diffusing into edge
+//	CopyEdge(p_in, p_out);
+//#else
+
+	// poziome krawedzie 
 	for (int x = 1; x < m_w - 1; x++)
 	{
-		for (int z = 1; z < m_d - 1; z++)
-		{
-			cell = Cell(x, 0, z);
-			p_out[cell] = p_in[cell] + a * (p_in[cell - 1] + p_in[cell + 1] + p_in[cell + m_h] - 3.0f * p_in[cell]);
-			cell = Cell(x, m_h - 1, z);
-			p_out[cell] = p_in[cell] + a * (p_in[cell - 1] + p_in[cell + 1] + p_in[cell - m_h] - 3.0f * p_in[cell]);
-		}
+		int y = 0;
+		int z = 0;
+		cell = Cell(x, y, z);
+		p_out[cell] = p_in[cell] + a * (p_in[Cell(x -1, y, z)] + p_in[Cell(x + 1, y, z)] + p_in[Cell(x, y + 1, z)] +  p_in[Cell(x, y, z + 1)] - 4.0f * p_in[cell]);
+
+		y = 0;
+		z = m_d;
+		cell = Cell(x, y, z);
+		p_out[cell] = p_in[cell] + a * (p_in[Cell(x - 1, y, z)] + p_in[Cell(x + 1, y, z)] + p_in[Cell(x, y + 1, z)] + p_in[Cell(x, y, z - 1)] - 4.0f * p_in[cell]);
+
+		y = m_h;
+		z = m_d;
+		cell = Cell(x, y, z);
+		p_out[cell] = p_in[cell] + a * (p_in[Cell(x - 1, y, z)] + p_in[Cell(x + 1, y, z)] + p_in[Cell(x, y - 1, z)] + p_in[Cell(x, y, z - 1)] - 4.0f * p_in[cell]);
+
+		y = m_h;
+		z = 0;
+		cell = Cell(x, y, z);
+		p_out[cell] = p_in[cell] + a * (p_in[Cell(x - 1, y, z)] + p_in[Cell(x + 1, y, z)] + p_in[Cell(x, y - 1, z)] + p_in[Cell(x, y, z + 1)] - 4.0f * p_in[cell]);
 	}
-	// left and right edges
+
+	// pionowe krawedzie 
 	for (int y = 1; y < m_h - 1; y++)
 	{
-		for (int z = 1; z < m_d - 1; z++)
-		{
-			cell = Cell(0, y,z);
-			p_out[cell] = p_in[cell] + a * (p_in[cell - m_w] + p_in[cell + m_w] + p_in[cell + 1] - 3.0f * p_in[cell]);
-			cell = Cell(m_w - 1, y,z);
-			p_out[cell] = p_in[cell] + a * (p_in[cell - m_w] + p_in[cell + m_w] + p_in[cell - 1] - 3.0f * p_in[cell]);
-		}
+		int x = 0;
+		int z = 0;
+		cell = Cell(x, y, z);
+		p_out[cell] = p_in[cell] + a * (p_in[Cell(x, y +1 , z)] + p_in[Cell(x, y + 1, z)] + p_in[Cell(x + 1 , y, z)] + p_in[Cell(x, y, z + 1)] - 4.0f * p_in[cell]);
+
+		x = m_w;
+		z = 0;
+		cell = Cell(x, y, z);
+		p_out[cell] = p_in[cell] + a * (p_in[Cell(x, y + 1, z)] + p_in[Cell(x, y + 1, z)] + p_in[Cell(x - 1, y, z)] + p_in[Cell(x, y, z + 1)] - 4.0f * p_in[cell]);
+
+		x = m_w;
+		z = m_d;
+		cell = Cell(x, y, z);
+		p_out[cell] = p_in[cell] + a * (p_in[Cell(x, y + 1, z)] + p_in[Cell(x, y + 1, z)] + p_in[Cell(x - 1, y, z)] + p_in[Cell(x, y, z - 1)] - 4.0f * p_in[cell]);
+
+		x = 0;
+		z = m_d;
+		cell = Cell(x, y, z);
+		p_out[cell] = p_in[cell] + a * (p_in[Cell(x, y + 1, z)] + p_in[Cell(x, y + 1, z)] + p_in[Cell(x + 1, y, z)] + p_in[Cell(x, y, z - 1)] - 4.0f * p_in[cell]);
 	}
-	// corners
-	for (int z = 1; z < m_d - 1; z++)
-	{
-		cell = Cell(0, 0, z);
-		p_out[cell] = p_in[cell] + a * (p_in[cell + 1] + p_in[cell + m_w] - 2.0f * p_in[cell]);
-		cell = Cell(m_w - 1, 0, z);
-		p_out[cell] = p_in[cell] + a * (p_in[cell - 1] + p_in[cell + m_w] - 2.0f * p_in[cell]);
-		cell = Cell(0, m_h - 1, z);
-		p_out[cell] = p_in[cell] + a * (p_in[cell + 1] + p_in[cell - m_w] - 2.0f * p_in[cell]);
-		cell = Cell(m_w - 1, m_h - 1, z);
-		p_out[cell] = p_in[cell] + a * (p_in[cell - 1] + p_in[cell - m_w] - 2.0f * p_in[cell]);
-	}
-#endif
+
+	//œciana przednia i tylna
+	
+
+
+//#endif
 	for (int x = 1; x < m_w - 1; x++)
 	{
 		for (int y = 1; y < m_h - 1; y++)
@@ -1331,7 +847,7 @@ void CFluid::Diffusion(float *p_in, float *p_out, float scale)
 			for (int z = 1; z < m_d - 1; z++)
 			{
 				cell = Cell(x, y, z);
-				p_out[cell] = p_in[cell] + a * (p_in[Cell(x, y + 1, z)] + p_in[Cell(x, y - 1, z)] + p_in[Cell(x + 1, y, z)] + p_in[Cell(x - 1, y, z)] - 4.0f * p_in[cell]);
+				p_out[cell] = p_in[cell] + a * (p_in[Cell(x, y + 1, z)] + p_in[Cell(x, y - 1, z)] + p_in[Cell(x + 1, y, z)] + p_in[Cell(x - 1, y, z)] + p_in[Cell(x, y, z +1)] + p_in[Cell(x, y, z -1)] - 6.0f * p_in[cell]);
 			}
 		}
 	}
@@ -1405,14 +921,9 @@ void CFluid::CopyField(float *p_in, float *p_out)
 {
 	int size = m_w * m_h * m_d;
 
-#if 0
-	for (int x = 0; x<size; x++)
-	{
-		p_out[x] = p_in[x];
-	}
-#else
+
 	memcpy(p_out, p_in, size * sizeof(float));
-#endif
+
 
 }
 
@@ -1567,124 +1078,24 @@ void CFluid::EdgeVelocities()
 
 }
 
-inline void CFluid::Collide(float x, float y, float z, float &x1, float &y1, float &z2)
+inline void CFluid::Collide(float x, float y, float z, float &x1, float &y1, float &z1)
 {
 	float left_bound = m_w - 1.0001f;
 	float bot_bound = m_h - 1.0001f;
-#if 0
-	// simple clamping
-	if (x1<0) x1 = 0;
-	else if (x1>left_bound) x1 = left_bound;  // allow to go just into the far edge of last but one cell
-	if (y1<0) y1 = 0;
-	else if (y1>bot_bound) y1 = bot_bound;
-#endif
-#ifdef FLUID_WRAPPING
-	// Simple wrapping - need to also wrap pressure accelleration if doing this
-	if (x1<0) x1 = left_bound + x1;
-	if (x1>left_bound) x1 -= left_bound;
-	if (y1<0) y1 += bot_bound;
-	if (y1>bot_bound) y1 -= bot_bound;
-#endif
-#ifndef FLUID_WRAPPING
-	// proper reflection
+	float back_bound = m_d - 1.0001f;
+
+
 	if (x1<0) x1 = -x1;
 	else if (x1>left_bound) x1 = left_bound - (x1 - left_bound);
 	if (y1<0) y1 = -y1;
 	else if (y1>bot_bound) y1 = bot_bound - (y1 - bot_bound);
-#endif
-#if 0
-	// collision with a parametric circle
-	// This does not work as is, since the circle edges are not on cell boundries
-	// so edge cells are both inside and outside, and so they fill up and bleed into the center cells
-	// we also don't have a mechanism for not updating cells inside the circle
-	// we need to either define collisions based purely on the rectangular cells
-	// or work on an arbitary triangle grid, which might be interesting.
-	Vector3 center = Vector3(50.0f, 50.0f);
-	Vector3 end = Vector3(x1, y1) - center;
-	Vector3 start = Vector3(x, y) - center;
+	if (z1<0) z1 = -z1;
+	else if (z1>back_bound) z1 = back_bound - (z1 - back_bound);
 
-	float end_len2 = end.Length2();
-	float start_len2 = start.Length2();
-	float radius = 20.0f;
-	if (end_len2 < radius*radius && start_len2 >= radius*radius)
-	{
 
-		// end is inside the circle
-		// Get start point relative to the center
-		Vector3 p1, p2;
-		if (LineCircleIntersect(start, end, radius, p1, p2))
-		{
-			// p2 is the collision point, still in relative coordinates
-			// so we need to reflect start->end about 0->p2
-			// we already know that p2 is on the circle, so we have its length alreadys
-			Vector3 p2_to_end = end - p2;
-			Vector3 reflection_axis = p2 / radius;
-			float p2_to_end_outwards = DotProduct(p2_to_end, reflection_axis);
-			// Adjust the end point
-			end = end - reflection_axis * p2_to_end_outwards * 2.0f;
-			// And finally return the absolute coordinates
-			end = end + center;
-			x1 = end.x;
-			y1 = end.y;
-			//x1 = x;
-			//y1 = y;
-		}
-	}
-#endif
 }
 
 
-#if 0
-// OLD - cells on either side of a cell affect the middle cell.
-// The force of pressure affects velocity
-// THIS DOES NOT GIVE VELOCITY TO THE EDGES, LEADING TO STUCK CELLS
-// (stuck cells only if velocity is advected before pressure)
-void CFluid::PressureAcceleration(float force)
-{
-
-	// Pressure differential between points  
-	// to get an accelleration force.
-	float a = m_dt * force;
-
-	// must copy the velocity field edges are they are not updated
-	CopyEdge(mp_xv0, mp_xv1);
-	CopyEdge(mp_yv0, mp_yv1);
-
-	for (int iterate = 0; iterate<1; iterate++)
-	{
-		for (int x = 1; x < m_w - 1; x++)
-		{
-			for (int y = 1; y < m_h - 1; y++)
-			{
-				int cell = Cell(x, y);
-
-				//	float	adj = 4.0f;
-				//	if (x == 1 || x == m_w-2) adj -= 1.0f;
-				//	if (y == 1 || y == m_h-2) adj -= 1.0f;
-
-				// the pressure of this cell cancels out l/r u/d 
-				// so it's just the pressure diffential of points on either side
-				float force_x = -mp_p0[cell - 1] + mp_p0[cell + 1];
-				float force_y = -mp_p0[cell - m_w] + mp_p0[cell + m_w];
-
-				mp_xv1[cell] = mp_xv0[cell] - a * force_x;
-				mp_yv1[cell] = mp_yv0[cell] - a * force_y;
-
-				// A		B		C		D
-				// 		   C-A     D-B 	
-
-			}
-		}
-		float *t = mp_xv1;
-		mp_xv1 = mp_xv0;
-		mp_xv0 = t;
-		t = mp_yv1;
-		mp_yv1 = mp_yv0;
-		mp_yv0 = t;
-	}
-
-}
-#else
 // NEW - treat cells pairwise, which allows us to handle edge cells
 // updates ALL cells
 void CFluid::PressureAcceleration(float force)
@@ -1712,7 +1123,6 @@ void CFluid::PressureAcceleration(float force)
 
 	//	for (int iterate = 0; iterate<1;iterate++)
 	{
-#ifndef FLUID_WRAPPING
 		for (int x = 0; x < m_w - 1; x++)
 		{
 			for (int y = 0; y < m_h - 1; y++)
@@ -1721,96 +1131,25 @@ void CFluid::PressureAcceleration(float force)
 				{
 					int cell = Cell(x, y, z);
 
-					float force_x = mp_p0[cell] - mp_p0[cell + 1];
-					float force_y = mp_p0[cell] - mp_p0[cell + m_w];
-					float force_ = mp_p0[cell] - mp_p0[cell + m_w*m_d];
+					float force_x = mp_p0[cell] - mp_p0[Cell(x + 1, y, z)];
+					float force_y = mp_p0[cell] - mp_p0[Cell(x, y + 1, z)];
+					float force_z = mp_p0[cell] - mp_p0[Cell(x, y, z + 1)];
 
-#if 0
-
-
-					float pressure_c = mp_p0[cell];
-					float pressure_scale_c = pressure_c*pressure_c*pressure_c - 0.125f;
-
-					float pressure_l = mp_p0[cell + 1];
-					float pressure_scale_l = pressure_l*pressure_l*pressure_l - 0.125f;
-
-					float pressure_d = mp_p0[cell + m_w];
-					float pressure_scale_d = pressure_d*pressure_d*pressure_d - 0.125f;
-
-					// forces act in same direction  on both cells
-					mp_xv1[cell] += a * force_x  * pressure_scale_c;
-					mp_xv1[cell + 1] += a * force_x  * pressure_scale_l;  // B-A
-
-					mp_yv1[cell] += a * force_y  * pressure_scale_c;
-					mp_yv1[cell + m_w] += a * force_y  * pressure_scale_d;
-#else
-					// forces act in same direction  on both cells
-					if (1 || this == &g_fluid1)
-					{
+					
 						mp_xv1[cell] += a * force_x;
-						mp_xv1[cell + 1] += a * force_x;
+						mp_xv1[Cell(x + 1, y, z)] += a * force_x;
 
 						mp_yv1[cell] += a * force_y;
-						mp_yv1[cell + m_w] += a * force_y;
+						mp_yv1[Cell(x, y +1, z)] += a * force_y;
 
-						mp_zv1[cell] += a * force_y;
-						mp_zv1[cell + m_w*m_d] += a * force_y;
-					}
-					else
-					{
-						if (force_x > 0.0f)
-						{
-							mp_xv1[cell] += a * force_x * force_x;
-							mp_xv1[cell + 1] += a * force_x * force_x;
-						}
-						else
-						{
-							mp_xv1[cell] -= a * force_x * force_x;
-							mp_xv1[cell + 1] -= a * force_x * force_x;
-						}
-
-						if (force_y > 0)
-						{
-							mp_yv1[cell] += a * force_y * force_y;
-							mp_yv1[cell + m_w] += a * force_y * force_y;
-						}
-						else
-						{
-							mp_yv1[cell] -= a * force_y * force_y;
-							mp_yv1[cell + m_w] -= a * force_y * force_y;
-						}
-					}
+						mp_zv1[cell] += a * force_z;
+						mp_zv1[Cell(x, y, z+1)] += a * force_z;
+					
+				
 				}
-#endif
+
 			}
 		}
-#else
-		for (int x = 0; x < m_w; x++)
-		{
-			for (int y = 0; y < m_h; y++)
-			{
-				int cell = Cell(x, y);
-
-				int nextx = cell + 1;
-				if (x == m_w - 1) nextx = Cell(0, y);
-
-				int nexty = cell + m_w;
-				if (y == m_h - 1) nexty = Cell(x, 0);
-
-
-				float force_x = mp_p0[cell] - mp_p0[nextx];
-				float force_y = mp_p0[cell] - mp_p0[nexty];
-
-				// forces act in same direction  on both cells
-				mp_xv1[cell] += a * force_x;
-				mp_xv1[nextx] += a * force_x;  // B-A
-
-				mp_yv1[cell] += a * force_y;
-				mp_yv1[nexty] += a * force_y;
-			}
-		}
-
-#endif
 
 		float *t = mp_xv1;
 		mp_xv1 = mp_xv0;
@@ -1826,7 +1165,7 @@ void CFluid::PressureAcceleration(float force)
 	}
 
 }
-#endif
+
 
 // The force of pressure affects velocity
 void CFluid::VelocityFriction(float a, float b, float c)
@@ -1918,7 +1257,7 @@ void CFluid::ClampVelocity(float max_v)
 // can be used to apply a heat field to velocity
 void CFluid::ForceFrom(float *p_from, float *p_to, float f)
 {
-	f *= m_dt;
+	f *= m_dt*2;
 	int size = m_w * m_h * m_d;
 	for (int cell = 0; cell < size; cell++)
 	{
@@ -1928,7 +1267,7 @@ void CFluid::ForceFrom(float *p_from, float *p_to, float f)
 
 void CFluid::ApplyForce(float *p_to, float f)
 {
-	f *= m_dt;
+	f *= m_dt*2;
 	int size = m_w * m_h * m_d;
 	for (int cell = 0; cell < size; cell++)
 	{
@@ -1971,6 +1310,11 @@ void CFluid::ReverseAdvection(float *p_in, float*p_out, float scale)
 					float y1 = y + vy * a;
 					float z1 = z + vz * a;
 					Collide(x, y, z, x1, y1, z1);
+					if (x1 > m_w) x1 = m_w;
+					if (y1 > m_h) y1 = m_h;
+					if (z1 > m_d) z1 = m_d;
+
+
 					int cell1 = Cell((int)x1, (int)y1, (int)z1);
 
 					// get fractional parts
@@ -2221,7 +1565,7 @@ void CFluid::ForwardAdvection(float *p_in, float*p_out, float scale)
 					int iy = (int)y1;
 					int iz = (int)z1;
 
-					int cell1 = Cell(ix, iy, iz);
+				
 					// get fractional parts
 					float fx = x1 - (int)x1;
 					float fy = y1 - (int)y1;
@@ -2243,18 +1587,29 @@ void CFluid::ForwardAdvection(float *p_in, float*p_out, float scale)
 
 					float in = p_in[cell];
 
-					float ia = (1.0f - fy)*(1.0f - fx) * in;
-					float ib = (1.0f - fy)*(fx)* in;
-					float ic = (fy)     *(1.0f - fx) * in;
-					float id = (fy)     *(fx)* in;
+
+					float ixyz = (1.0f - fx)*(1.0f - fy)*(1.0f -fz) * in;
+					float ixyz1 = (1.0f - fx)*(1.0f - fy)*(fz) * in;
+					float ixy1z = (1.0f - fx)*(fy)*(1.0f - fz)* in;
+					float ix1yz = (fx)*(1.0f - fy)*(1.0f - fz)* in;
+
+					float ixy1z1 = (1.0f - fx)*(fy)*(fz) * in;
+					float ix1yz1 = (fx)*(1.0f - fy)*(fz) * in;
+					float ix1y1z = (fx)*(fy)*(1.0f - fz) * in;
+					float ix1y1z1 = (fx)*(fy)*(fz)* in;
 
 					// Subtract them from the source cell
-					p_out[cell] -= (ia + ib + ic + id);
+					p_out[cell] -= (ixyz + ixyz1 + ixy1z + ix1yz + ix1yz + ix1yz1 + ix1y1z + ix1y1z1);
 					// Then add them to the four destination cells
-					p_out[cell1] += ia;
-					p_out[cell1 + 1] += ib;
-					p_out[cell1 + w] += ic;
-					p_out[cell1 + w + 1] += id;
+					p_out[Cell(ix, iy, iz)] += ixyz;
+					p_out[Cell(ix, iy, iz + 1)] += ixyz1;
+					p_out[Cell(ix, iy + 1, iz)] += ixy1z;
+					p_out[Cell(ix + 1, iy, iz)] += ix1yz;
+					p_out[Cell(ix, iy + 1, iz + 1)] += ixy1z1;
+					p_out[Cell(ix +1, iy, iz + 1)] += ix1yz1;
+					p_out[Cell(ix + 1, iy + 1, iz)] += ix1y1z;
+					p_out[Cell(ix +1, iy +1, iz +1)] += ix1y1z1;
+				
 				}
 			}
 		}
@@ -2291,13 +1646,20 @@ void CFluid::PartialForwardAdvection(float *p_in, float*p_out, float scale, floa
 				float vx = mp_xv0[cell];
 				float vy = mp_yv0[cell];
 				float vz = mp_zv0[cell];
+
+
 				if (vx != 0.0f || vy != 0.0f || vz != 0.0f)
 				{
 					float x1 = x + vx * a;
 					float y1 = y + vy * a;
 					float z1 = z + vz * a;
 					Collide(x, y, z, x1, y1, z1);
-					int cell1 = Cell((int)x1, (int)y1, (int)z1);
+
+					int ix = (int)x1;
+					int iy = (int)y1;
+					int iz = (int)z1;
+
+
 					// get fractional parts
 					float fx = x1 - (int)x1;
 					float fy = y1 - (int)y1;
@@ -2317,20 +1679,31 @@ void CFluid::PartialForwardAdvection(float *p_in, float*p_out, float scale, floa
 					// (Should be square)
 					// so we work out the bilinear fraction at each of a,b,c,d
 
-					float in = p_in[cell] * partial;
+					float in = p_in[cell];
 
-					float ia = (1.0f - fy)*(1.0f - fx) * in;
-					float ib = (1.0f - fy)*(fx)* in;
-					float ic = (fy)     *(1.0f - fx) * in;
-					float id = (fy)     *(fx)* in;
+
+					float ixyz = (1.0f - fy)*(1.0f - fx)*(1.0f - fz) * in;
+					float ixyz1 = (1.0f - fy)*(1.0f - fx)*(fz)* in;
+					float ixy1z = (1.0f - fy)*(fx)*(1.0f - fz)* in;
+					float ix1yz = (fy)*(1.0f - fx)*(1.0f - fz)* in;
+
+					float ixy1z1 = (1.0f - fy)*(fx)*(fz)* in;
+					float ix1yz1 = (fy)*(1.0f - fx)*(fz)* in;
+					float ix1y1z = (fy)*(fx)*(fz)* in;
+					float ix1y1z1 = (fy)*(fx)*(fz)* in;
 
 					// Subtract them from the source cell
-					p_out[cell] -= (ia + ib + ic + id);
+					p_out[cell] -= (ixyz + ixyz1 + ixy1z + ix1yz + ix1yz + ix1yz1 + ix1y1z + ix1y1z1);
 					// Then add them to the four destination cells
-					p_out[cell1] += ia;
-					p_out[cell1 + 1] += ib;
-					p_out[cell1 + w] += ic;
-					p_out[cell1 + w + 1] += id;
+					p_out[Cell(ix, iy, iz)] += ixyz;
+					p_out[Cell(ix, iy, iz + 1)] += ixyz1;
+					p_out[Cell(ix, iy + 1, iz)] += ixy1z;
+					p_out[Cell(ix + 1, iy, iz)] += ix1yz;
+					p_out[Cell(ix, iy + 1, iz + 1)] += ixy1z1;
+					p_out[Cell(ix + 1, iy, iz + 1)] += ix1yz1;
+					p_out[Cell(ix + 1, iy + 1, iz)] += ix1y1z;
+					p_out[Cell(ix + 1, iy + 1, iz + 1)] += ix1y1z1;
+
 				}
 			}
 		}
@@ -2348,21 +1721,13 @@ void CFluid::BFECCForwardAdvection(float *p_in, float*p_out, float scale)
 
 	// DOES NOT HELP WITH THE WAY I'M DOING THIGNS
 
-#if 0
-	ReverseAdvection(p_in, p_out, scale);           // Forwards
-	ReverseAdvection(p_out, mp_BFECC, -scale);	  // then backwards should give us the original
-	SubFields(p_in, mp_BFECC, mp_BFECC);			  // Subtract it gives us the error
-	MulField(mp_BFECC, 0.5f, mp_BFECC);			  // half the error
-	AddFields(p_in, mp_BFECC, mp_BFECC);			  // add to original
-	ReverseAdvection(mp_BFECC, p_out, scale);		  // and advect that
-#else
 	ForwardAdvection(p_in, p_out, scale);           // Forwards
 	ForwardAdvection(p_out, mp_BFECC, -scale);	  // then backwards should give us the original
 	SubFields(p_in, mp_BFECC, mp_BFECC);			  // Subtract it gives us the error
 	MulField(mp_BFECC, 0.5f, mp_BFECC);			  // half the error
 	AddFields(p_in, mp_BFECC, mp_BFECC);			  // add to original
 	ForwardAdvection(mp_BFECC, p_out, scale);		  // and advect that
-#endif
+
 
 
 }
@@ -2400,6 +1765,8 @@ void CFluid::VorticityConfinement(float scale)
 	ZeroEdge(mp_p1);
 	ZeroField(mp_xv1);
 	ZeroField(mp_yv1);
+	ZeroField(mp_zv1);
+
 
 	float *p_abs_curl = mp_p1;
 
@@ -2420,7 +1787,7 @@ void CFluid::VorticityConfinement(float scale)
 		{
 			for (int z = 2; z < m_d - 1; z++)
 			{
-#if 1
+
 				int cell = Cell(x, y, z);
 				// get curl gradient across this cell, left right
 				float lr_curl = (p_abs_curl[cell + 1] - p_abs_curl[cell - 1]) * 0.5f;
@@ -2442,17 +1809,7 @@ void CFluid::VorticityConfinement(float scale)
 				mp_xv1[Cell(x, y, z)] = -ud_curl *  v;
 				mp_yv1[Cell(x, y, z)] = lr_curl *  v;
 				mp_zv1[Cell(x, y, z)] = fb_curl *  v;
-#else
-				float x_curl = (mp_xv0[Cell(x, y + 1)] - mp_xv0[Cell(x, y - 1)]) * 0.5f;
 
-				// difference in YV of cells left and right
-				// positive number is a counter-clockwise rotation
-				float y_curl = (mp_yv0[Cell(x + 1, y)] - mp_yv0[Cell(x - 1, y)]) * 0.5f;
-
-				mp_xv1[Cell(x, y)] = y_curl*scale;
-				mp_yv1[Cell(x, y)] = x_curl*scale;
-
-#endif
 
 			}
 		}
@@ -2549,16 +1906,7 @@ void CFluid::Render(float x, float y, float w, float h)
 
 	float *p_ink = mp_ink0;
 	float scale = 100.0f; //255.0f; 
-	if (key_w)
-	{
-		p_ink = mp_p0;
-		scale = 128;
-	}
-	if (key_d)
-	{
-		p_ink = mp_balance;
-		scale = 128;
-	}
+
 
 	for (int x0 = 0; x0<m_w; x0++)
 	{
@@ -2568,7 +1916,7 @@ void CFluid::Render(float x, float y, float w, float h)
 			{
 				int cell = Cell(x0, y0, z0);
 
-				if ((x0 < m_w - 1 && y0 < m_h - 1) || true)
+				if ((x0 < m_w - 1 && y0 < m_h - 1 && z0 < m_d -1))
 				{
 					unsigned int base = 0xff000000;
 					int p0 = scale * p_ink[cell];
@@ -2598,49 +1946,23 @@ void CFluid::Render(float x, float y, float w, float h)
 						base = 0xffff0000;
 
 
-					if (0 && key_d)
-					{
-						h0 = p0 - h0;
-						h1 = p1 - h1;
-						h2 = p2 - h2;
-						h3 = p3 - h3;
-						if (h0 < 0) h0 = 0;
-						if (h0 < 1) h1 = 0;
-						if (h0 < 2) h2 = 0;
-						if (h0 < 3) h3 = 0;
-
-						p0 = h0 + (h0 << 8) + (p0 << 16);
-						p1 = h1 + (h1 << 8) + (p1 << 16);
-						p2 = h2 + (h2 << 8) + (p2 << 16);
-						p3 = h3 + (h3 << 8) + (p3 << 16);
-					}
-					else
-					{
+			
 						p0 = p0 + (p0 << 8) + (p0 << 16) + (p0 << 24);
 						p1 = p1 + (p1 << 8) + (p1 << 16) + (p1 << 24);
 						p2 = p2 + (p2 << 8) + (p2 << 16) + (p2 << 24);
 						p3 = p3 + (p3 << 8) + (p3 << 16) + (p3 << 24);
 
-
-					}
-
-#if 0
-					//unsigned int mask = 0xfff0f0f0;
-					//				unsigned int mask = 0x00ffffff;
-					//				p0 ^= mask;
-					//				p1 ^= mask;
-					//				p2 ^= mask;
-					//				p3 ^= mask;
-
-					p1 = p0;
-					p2 = p0;
-					p3 = p0;
-#endif
 					//DrawRect(x + x0 * wx, y + y0*wy, wx, wy, base + p0, base + p1, base + p2, base + p3);
 					D3DCOLOR col = base + p0;
 					//drawCube(x0, y0, z0, base + p0);
-			
-					drawCube(x0, y0, z0, D3DCOLOR_ARGB(p0+p2+p3, 255, 255, 255));
+			//if(p0 + p1 + p2 + p3 > 0)
+					//drawCube(x0, y0, z0, D3DCOLOR_ARGB(p0 + p1 + p2 + p3, 255, 255, 255));
+
+					//drawCube(x0, y0, z0, D3DCOLOR_ARGB(255, 255, 255, 255));
+					//drawCube(x0, y0, z0, D3DCOLOR_ARGB(3, rand(), rand(), rand()));
+					drawCube(x0, y0, z0, D3DCOLOR_ARGB(p0, 255, 255, 255));
+
+
 				}
 			}
 		}
@@ -2655,90 +1977,22 @@ void CFluid::Update(float dt)
 
 	static bool update = 1;
 
-	if (key_space)
-	{
-		key_space = 0;
-		update = !update;
-	}
-
 	if (!update)
 		return;
 
-	if (key_s)
-		Reset();
+
 
 	// Time step stored locally per fluid system 
 	m_dt = dt;
 
-#if 1
-	if (m_velocity_diffusion != 0.0f)
-	{
-		for (int i = 0; i<m_diffusion_iterations; i++)
-		{
-			Diffusion(mp_xv0, mp_xv1, m_velocity_diffusion / (float)m_diffusion_iterations);
-			swap(mp_xv0, mp_xv1);
-			Diffusion(mp_yv0, mp_yv1, m_velocity_diffusion / (float)m_diffusion_iterations);
-			swap(mp_yv0, mp_yv1);
-		}
-	}
-#endif
-
-	if (m_pressure_diffusion != 0.0f)
-	{
-		for (int i = 0; i<m_diffusion_iterations; i++)
-		{
-			Diffusion(mp_p0, mp_p1, m_pressure_diffusion / (float)m_diffusion_iterations);
-			swap(mp_p0, mp_p1);
-		}
-	}
-	if (m_heat_diffusion != 0.0f)
-	{
-		for (int i = 0; i<m_diffusion_iterations; i++)
-		{
-			Diffusion(mp_heat0, mp_heat1, m_heat_diffusion / (float)m_diffusion_iterations);
-			swap(mp_heat0, mp_heat1);
-
-		}
-	}
-
-	if (m_ink_diffusion != 0.0f)
-	{
-		for (int i = 0; i<m_diffusion_iterations; i++)
-		{
-			Diffusion(mp_ink0, mp_ink1, m_ink_diffusion / (float)m_diffusion_iterations);
-			swap(mp_ink0, mp_ink1);
-		}
-	}
 
 
-	if (m_ink_heat != 0.0f)
-	{
-		// TO make smoke rise under its own steam, we make the ink apply an
-		// upwards force on the velocity field
-		// heat froce from the ink
-		ForceFrom(mp_ink0, mp_yv0, m_ink_heat);
-		//ForceFrom(mp_p0,mp_yv0,ink_heat);
-		// Optional Kill edge ink, so smoke edits to the top
-		//ZeroEdge(mp_ink0);  
-
-		// Fade ink
-		//	ForceFrom(mp_ink0,mp_ink0,-0.1f);
-
-	}
 
 	if (m_heat_force != 0.0f && !m_field_test)
 	{
-		// TO make smoke rise under its own steam, we make the ink apply an
-		// upwards force on the velocity field
-		// heat froce from the ink
-		ForceFrom(mp_heat0, mp_yv0, m_heat_force);
-		//if (this == &g_fluid1)
-		//ForceFrom(mp_heat0,mp_xv0,m_heat_force);
-		// Kill edge ink, so smoke edits to the top
-		//ZeroEdge(mp_ink0);
 
-		// Cooling effect, otherwise things just explode
-		//ForceFrom(mp_heat0,mp_heat0,-0.3f);
+		ForceFrom(mp_heat0, mp_yv0, m_heat_force);
+
 		if (m_heat_friction_a != 0 || m_heat_friction_b != 0 || m_heat_friction_c != 0)
 			QuadraticDecay(mp_heat0, mp_heat0, m_heat_friction_a, m_heat_friction_b, m_heat_friction_c);
 	}
@@ -2816,7 +2070,8 @@ void CFluid::Update(float dt)
 	// smaller grids mean large cells, so scale should be smaller
 	float advection_scale = m_w / 100.f;
 
-#if 1
+	advection_scale = 1;
+	
 	SetField(mp_ink1, 1.0f);
 	ForwardAdvection(mp_ink1, mp_balance, m_ink_advection * advection_scale);
 	//if (this == &g_fluid2)
@@ -2828,7 +2083,7 @@ void CFluid::Update(float dt)
 	//		MulFields(mp_balance,mp_yv0,mp_yv0);
 	//		MulFields(mp_balance,mp_xv0,mp_xv0);
 	//}
-#endif
+
 
 	// Advect the ink - ink is one fluid suspended in another, like smoke in air
 	ForwardAdvection(mp_ink0, mp_ink1, m_ink_advection * advection_scale);
@@ -2865,17 +2120,17 @@ void CFluid::Update(float dt)
 		// then swap 2 into 0 so it becomes the new current velocity
 		ForwardAdvection(mp_xv0, mp_xv1, m_velocity_advection * advection_scale);
 		ForwardAdvection(mp_yv0, mp_yv1, m_velocity_advection * advection_scale);
-#if 1
+		ForwardAdvection(mp_zv0, mp_zv1, m_velocity_advection * advection_scale);
+
 		// Advect from 1 into 2, then swap 0 and 2
 		// We can use signed reverse advection as quantities can be negative.
 		ReverseSignedAdvection(mp_xv1, mp_xv2, m_velocity_advection * advection_scale);
 		ReverseSignedAdvection(mp_yv1, mp_yv2, m_velocity_advection * advection_scale);
+		ReverseSignedAdvection(mp_zv1, mp_zv2, m_velocity_advection * advection_scale);
 		swap(mp_xv2, mp_xv0);
 		swap(mp_yv2, mp_yv0);
-#else
-		swap(mp_xv1, mp_xv0);
-		swap(mp_yv1, mp_yv0);
-#endif
+		swap(mp_zv2, mp_zv0);
+
 		// handle velocities at the edge, confining them to within the cells.
 		// Not needed with correct edge sampling and pressure, as edge pressure will turn the vel
 		// But since we have several 
@@ -2896,17 +2151,6 @@ void CFluid::Update(float dt)
 	ReverseAdvection(mp_p0, mp_p1, m_pressure_advection * advection_scale);
 	swap(mp_p0, mp_p1);
 
-
-#if 0
-	for (int x0 = 0; x0<m_w; x0++)
-	{
-		for (int y0 = 0; y0<m_h; y0++)
-		{
-			int cell = Cell(x0, y0);
-			tot_p += mp_p0[cell];
-		}
-	}
-#endif
 
 
 }
@@ -3099,117 +2343,6 @@ void MX_Logic(float time)
 }
 
 
-//-----------------------------------------------------------------------------
-// Name: MsgProc()
-// Desc: The window's message handler
-//-----------------------------------------------------------------------------
-LRESULT WINAPI MsgProc2(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (msg)
-	{
-	case WM_DESTROY:
-		Cleanup();
-		PostQuitMessage(0);
-		return 0;
-
-	case WM_SETFOCUS:
-		has_focus = 1;
-		break;
-
-	case WM_KILLFOCUS:
-		has_focus = 0;
-		break;
-
-
-	case WM_SIZE:
-	{
-		//    	    resize_db(hWnd);		
-		//    		InitD3D(hWnd);
-		g_resize = true;
-		break;
-	}
-
-
-	case WM_RBUTTONUP:
-	{
-		r_dragging = false;
-		break;
-	}
-
-
-	case WM_RBUTTONDOWN:
-	{
-		r_dragging = true;
-		break;
-	}
-
-	case WM_LBUTTONUP:
-	{
-		dragging = false;
-		break;
-	}
-
-
-	case WM_LBUTTONDOWN:
-	{
-		dragging = true;
-		// DROP THROUGH
-		//		break;
-	}
-
-
-
-	case WM_MOUSEMOVE:
-	{
-		//if (dragging)
-		{
-			mouse_x = LOWORD(lParam);  // X position of cursor 
-			mouse_y = HIWORD(lParam);  // Y position of cursor
-		}
-		break;
-	}
-
-	case WM_KEYDOWN:
-	{
-		int key = HIWORD(lParam) & 0x1ff;
-		//debug_log("%x", key);
-		if (key == 0x11) key_w = 1;
-		if (key == 0x1e) key_a = 1;
-		if (key == 0x1f) key_s = 1;
-		if (key == 0x20) key_d = 1;
-		if (key == 0x39) key_space = 1;
-		if (key == 0x14b) key_left = 1;
-		if (key == 0x14d) key_right = 1;
-		if (key == 0x148) key_up = 1;
-		if (key == 0x150) key_down = 1;
-
-
-	}
-	break;
-
-	case WM_KEYUP:
-	{
-		int key = HIWORD(lParam) & 0x1ff;
-		if (key == 0x11) key_w = 0;
-		if (key == 0x1e) key_a = 0;
-		if (key == 0x1f) key_s = 0;
-		if (key == 0x20) key_d = 0;
-		if (key == 0x39) key_space = 0;
-		if (key == 0x14b) key_left = 0;
-		if (key == 0x14d) key_right = 0;
-		if (key == 0x148) key_up = 0;
-		if (key == 0x150) key_down = 0;
-
-	}
-	break;
-
-
-	}
-
-
-	return DefWindowProc(hWnd, msg, wParam, lParam);
-}
-
 void InitFluids()
 {
 
@@ -3311,10 +2444,14 @@ void TestApp::Update(float dt)
 	//	}
 	//}
 
-	g_fluid1.AddValue(g_fluid1.mp_ink0, 50, 50, 50, 500);
-	g_fluid1.AddValue(g_fluid1.mp_heat0, 50, 50, 50, 500);
+	//wartosc
+	g_fluid1.AddValue(g_fluid1.mp_ink0, size /2, size -4, size /2, 20);
+	g_fluid1.AddValue(g_fluid1.mp_heat0, size /2, size -4, size /2, 400);
+	//g_fluid1.mp_yv0[g_fluid1.Cell(size / 2, size - 4, size / 2)] = 10;
 
-
+	//g_fluid1.AddValue(g_fluid1.mp_xv0, size, size, size / 2, 0.04f);
+	//g_fluid1.AddValue(g_fluid1.mp_yv0, size, size, size / 2, 0.04f);
+	//g_fluid1.AddValue(g_fluid1.mp_zv0, size, size, size / 2, 0.04f);
 
 
 
@@ -3329,30 +2466,12 @@ void TestApp::Update(float dt)
 
 if (has_focus)
 			{
-				static float fps = 0.0f;
-				float   start = Timer_Seconds();
-				static float last_time = 0.0f;
-				float time_step = start - last_time;
-				last_time = start;
-
-				// clamp timestep to 1/50th of a second max
-				if (time_step > 0.02)
-					time_step = 0.02f;
-
-				float fluid_start = Timer_Seconds();
+			
 				float fluid_start1 = Timer_Seconds();
-				g_fluid1.Update(time_step*1.4f);
-				//g_fluid1.Update(time_step*1.0f);
-				float fluid_end1 = Timer_Seconds();
-
-				float fluid_start2 = Timer_Seconds();
-
-				float fluid_end2 = Timer_Seconds();
-
-				//g_fluid1.MouseInput();
-				mouse_x += 510;
-				mouse_x -= 510;
-				float fluid_end = Timer_Seconds();
+				if (!key_a) {
+					g_fluid1.Update(0.02f);
+				}
+			
 			}
 			else
 			{
@@ -3364,8 +2483,6 @@ if (has_focus)
 
 	updateBuffers();
 	
-	GetMessage(&msg, NULL, 0, 0);
-	MsgProc2(msg.hwnd, msg.message, msg.wParam, msg.lParam);
 		
 
 	if (key_left) {
@@ -3396,18 +2513,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLint
 		return 1;
 	}
 
-
-
-
 	// Enter the message loop
 	ZeroMemory(&msg, sizeof(msg));
 	Timer_Init();
 
 
 	InitFluids();
-
-
-
 
 		return tApp->Run();
 

@@ -17,10 +17,14 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 D3DApp::D3DApp(HINSTANCE hInstance) {
 	m_hAppInstance = hInstance;
 	m_hAppWindow = NULL;
-	m_uiClientWidth = 400;
-	m_uiClientHeight = 300;
+	m_uiClientWidth = 600;
+	m_uiClientHeight = 600;
 	m_sApppTitle = "Test";
 	m_WindowStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+
+
+
+
 }
 
 D3DApp::~D3DApp()
@@ -64,6 +68,7 @@ bool D3DApp::Init()
 
 bool D3DApp::InitWindow()
 {
+
 	WNDCLASSEX wcex;
 	ZeroMemory(&wcex, sizeof(WNDCLASSEX));
 	wcex.cbClsExtra = 0;
@@ -104,6 +109,9 @@ bool D3DApp::InitWindow()
 
 	return true;
 }
+
+
+
 
 
 
@@ -176,15 +184,65 @@ bool D3DApp::InitDirect3D()
 	return true;
 }
  
+
+
+
 LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	extern int key_w;
+	extern int key_a;
+	extern int key_s;
+	extern int key_d;
+	extern int key_space;
+	extern int key_left;
+	extern int key_right;
+	extern int key_up;
+	extern int key_down;
 	switch (msg)
 	{
+
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
 
+
+		break;
+	case WM_KEYDOWN:
+	{
+
+		int key = HIWORD(lParam) & 0x1ff;
+		//debug_log("%x", key);
+		if (key == 0x11) key_w = 1;
+		if (key == 0x1e) key_a = 1;
+		if (key == 0x1f) key_s = 1;
+		if (key == 0x20) key_d = 1;
+		if (key == 0x39) key_space = 1;
+		if (key == 0x14b) key_left = 1;
+		if (key == 0x14d) key_right = 1;
+		if (key == 0x148) key_up = 1;
+		if (key == 0x150) key_down = 1;
+
+
+	}
+	break;
+
+	case WM_KEYUP:
+	{
+		int key = HIWORD(lParam) & 0x1ff;
+		if (key == 0x11) key_w = 0;
+		if (key == 0x1e) key_a = 0;
+		if (key == 0x1f) key_s = 0;
+		if (key == 0x20) key_d = 0;
+		if (key == 0x39) key_space = 0;
+		if (key == 0x14b) key_left = 0;
+		if (key == 0x14d) key_right = 0;
+		if (key == 0x148) key_up = 0;
+		if (key == 0x150) key_down = 0;
+
 	}
 
+	break;
+	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
