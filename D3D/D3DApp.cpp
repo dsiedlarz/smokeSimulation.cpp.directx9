@@ -17,7 +17,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 D3DApp::D3DApp(HINSTANCE hInstance) {
 	m_hAppInstance = hInstance;
 	m_hAppWindow = NULL;
-	m_uiClientWidth = 600;
+	m_uiClientWidth = 800;
 	m_uiClientHeight = 600;
 	m_sApppTitle = "Test";
 	m_WindowStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;

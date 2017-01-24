@@ -40,7 +40,8 @@ public:
 IDirect3DVertexBuffer9* VB;
 IDirect3DIndexBuffer9* IB;
 D3DXMATRIX World;
-int const size = 60;
+//rozmiar
+int const size = 75;
 int const vbSize = size *size *size;
 VertexPositionColor  verts[8 * vbSize];
 WORD indices[36* vbSize];
@@ -61,10 +62,6 @@ TestApp::~TestApp()
 
 
 void drawCube(float xx, float yy, float zz, D3DCOLOR color) {
-	
-	//xx = xx / 64;
-	//yy = yy / 64;
-	//zz = zz / 64;
 
 	yy = yy * -1;
 
@@ -172,9 +169,7 @@ bool TestApp::Init()
 }
 
 void updateBuffers() {
-
-
-
+	
 	VB->Lock(0, sizeof(verts), (void**)&pVerts, 0);
 	memcpy(pVerts, verts, sizeof(verts));
 	VB->Unlock();
@@ -229,9 +224,6 @@ void TestApp::Render()
 		first_prim += chunk;
 		currentCube -= chunk;
 	}
-
-	
-
 	//m_pDevice3D->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 0 , 0, size*size*size*36);
 
 
@@ -312,13 +304,6 @@ bool	r_dragging = 0;
 int		mouse_x = 0;
 int		mouse_y = 0;
 
-
-
-
-//
-//int	m_w = 60;
-//int	m_h = 60;
-//int	m_d = 60;
 
 
 int	m_w;
@@ -716,7 +701,7 @@ void	CFluid::Init(int w, int h, int d)
 	mp_heat0 = new float[size];
 	mp_heat1 = new float[size];
 	mp_sources = new int[size];
-	mp_source_fractions = new float[size * 4];
+	mp_source_fractions = new float[size * 8];
 	mp_fraction = new float[size];
 	mp_BFECC = new float[size];
 	mp_balance = new float[size];
@@ -1110,7 +1095,7 @@ void CFluid::PressureAcceleration(float force)
 	{
 		for (int y = 0; y < m_h; y++)
 		{
-			for (int z = 1; z < m_d - 1; z++)
+			for (int z = 0; z < m_d ; z++)
 			{
 				int cell = Cell(x, y, z);
 				mp_xv1[cell] = mp_xv0[cell];
@@ -1167,54 +1152,6 @@ void CFluid::PressureAcceleration(float force)
 }
 
 
-// The force of pressure affects velocity
-void CFluid::VelocityFriction(float a, float b, float c)
-{
-
-	for (int iterate = 0; iterate<1; iterate++)
-	{
-		// NOTE: We include the border cells in global friction
-		for (int x = 0; x < m_w; x++)
-		{
-			for (int y = 0; y < m_h; y++)
-			{
-				for (int z = 0; z < m_d; z++)
-				{
-					int cell = Cell(x, y, z);
-
-					Vector3  v = Vector3(mp_xv0[cell], mp_yv0[cell], mp_zv0[cell]);
-					float len3 = v.Length3();
-					float len = sqrtf(len3);
-					float sign = 1.0f;
-					if (len < 0.0f)
-					{
-						len = -len;
-						sign = -1.0f;
-					}
-#if 1
-					len -= m_dt*(a*len3 + b*len + c);
-#else
-					// Scale by pressure
-					if (this == &g_fluid1)
-						len -= m_dt*(a*len3 + b*len + c);
-					else
-						len -= m_dt*(a*len3 + b*len + c)*mp_p0[cell];
-#endif
-					if (len < 0.0f)
-						len = 0.0f;
-
-					if (len < 0.0f) len = 0.0f;
-					v = v.Normal()*len;
-					mp_xv0[cell] = v.x;
-					mp_yv0[cell] = v.y;
-					mp_zv0[cell] = v.z;
-				}
-			}
-		}
-	}
-
-}
-
 // Decay a positive value towards zero via a quadratic function
 void CFluid::QuadraticDecay(float *p_in, float *p_out, float a, float b, float c)
 {
@@ -1223,32 +1160,15 @@ void CFluid::QuadraticDecay(float *p_in, float *p_out, float a, float b, float c
 	for (int cell = 0; cell<size; cell++)
 	{
 		float v = p_in[cell];
+	
 		float v2 = v*v;
-		v -= dt*(a*v2 + b*v + c);
+		v -= dt*( a*v2 + b*v + c);
 		if (v <0.0f)
 			v = 0.0f;
+		if (v >50.0f)
+			v = 50.0f;
+		
 		p_in[cell] = v;
-	}
-}
-
-
-// Clamp velocity to a maximum magnitude
-void CFluid::ClampVelocity(float max_v)
-{
-	float max_v2 = max_v * max_v;
-	int size = m_w * m_h * m_d;
-	for (int cell = 0; cell < size; cell++)
-	{
-
-		Vector3  v = Vector3(mp_xv0[cell], mp_yv0[cell], mp_zv0[cell]);
-		float v3 = v.Length3();
-		if (v3 > max_v2)
-		{
-			v = v.Normal() * max_v;
-			mp_xv0[cell] = v.x;
-			mp_yv0[cell] = v.y;
-			mp_zv0[cell] = v.y;
-		}
 	}
 }
 
@@ -1257,7 +1177,7 @@ void CFluid::ClampVelocity(float max_v)
 // can be used to apply a heat field to velocity
 void CFluid::ForceFrom(float *p_from, float *p_to, float f)
 {
-	f *= m_dt*2;
+	f *= m_dt;
 	int size = m_w * m_h * m_d;
 	for (int cell = 0; cell < size; cell++)
 	{
@@ -1267,7 +1187,7 @@ void CFluid::ForceFrom(float *p_from, float *p_to, float f)
 
 void CFluid::ApplyForce(float *p_to, float f)
 {
-	f *= m_dt*2;
+	f *= m_dt;
 	int size = m_w * m_h * m_d;
 	for (int cell = 0; cell < size; cell++)
 	{
@@ -1306,6 +1226,26 @@ void CFluid::ReverseAdvection(float *p_in, float*p_out, float scale)
 				float vz = mp_zv0[cell];
 				if (vx != 0.0f || vy != 0.0f || vz != 0.0f)
 				{
+
+					float step = 0.25;
+					if (vx > step) {
+						vx = step;
+					}
+					if (vy > step) {
+						vy = step;
+					}
+					if (vz > step) {
+						vz = step;
+					}
+					if (vz < -1 * step) {
+						vz = -1 * step;
+					}
+					if (vx < -1 * step) {
+						vx = -1 * step;
+					}
+					if (vy < -1 * step) {
+						vy = -1 * step;
+					}
 					float x1 = x + vx * a;
 					float y1 = y + vy * a;
 					float z1 = z + vz * a;
@@ -1316,6 +1256,10 @@ void CFluid::ReverseAdvection(float *p_in, float*p_out, float scale)
 
 
 					int cell1 = Cell((int)x1, (int)y1, (int)z1);
+					
+					int ix = (int)x1;
+					int iy = (int)y1;
+					int iz = (int)z1;
 
 					// get fractional parts
 					float fx = x1 - (int)x1;
@@ -1377,10 +1321,15 @@ void CFluid::ReverseAdvection(float *p_in, float*p_out, float scale)
 
 					*/
 					// Just calculaitng fractions for now
-					float ia = (1.0f - fy)*(1.0f - fx);
-					float ib = (1.0f - fy)*(fx);
-					float ic = (fy)     *(1.0f - fx);
-					float id = (fy)     *(fx);
+							float ixyz = (1.0f - fx)*(1.0f - fy)*(1.0f -fz) ;
+					float ixyz1 = (1.0f - fx)*(1.0f - fy)*(fz) ;
+					float ixy1z = (1.0f - fx)*(fy)*(1.0f - fz);
+					float ix1yz = (fx)*(1.0f - fy)*(1.0f - fz);
+
+					float ixy1z1 = (1.0f - fx)*(fy)*(fz);
+					float ix1yz1 = (fx)*(1.0f - fy)*(fz);
+					float ix1y1z = (fx)*(fy)*(1.0f - fz);
+					float ix1y1z1 = (fx)*(fy)*(fz);
 					// Storing the source information for this dest cell (cell)
 					mp_sources[cell] = cell1;  // that's cell1, implying cell1+1, cell1+m_w and cell1+1+m_w
 											   // and the fractions, unless they are all zero
@@ -1388,16 +1337,39 @@ void CFluid::ReverseAdvection(float *p_in, float*p_out, float scale)
 											   // but since we optimize for a more likely case, this test wastes time
 											   //if (ia !=0.0f || ib!=0.0f || ic !=0.0f || id != 0.0f)
 					{
-						mp_source_fractions[cell * 4 + 0] = ia;
-						mp_source_fractions[cell * 4 + 1] = ib;
-						mp_source_fractions[cell * 4 + 2] = ic;
-						mp_source_fractions[cell * 4 + 3] = id;
+						//mp_source_fractions[cell * 4 + 0] = ia;
+						//mp_source_fractions[cell * 4 + 1] = ib;
+						//mp_source_fractions[cell * 4 + 2] = ic;
+						//mp_source_fractions[cell * 4 + 3] = id;
 
-						// Accumullting the fractions for the four sources 
-						mp_fraction[cell1] += ia;
-						mp_fraction[cell1 + 1] += ib;
-						mp_fraction[cell1 + m_w] += ic;
-						mp_fraction[cell1 + m_w + 1] += id;
+						//// Accumullting the fractions for the four sources 
+						//mp_fraction[cell1] += ia;
+						//mp_fraction[cell1 + 1] += ib;
+						//mp_fraction[cell1 + m_w] += ic;
+						//mp_fraction[cell1 + m_w + 1] += id;
+
+
+
+
+						mp_source_fractions[cell * 8 + 0] = ixyz;
+						mp_source_fractions[cell * 8 + 1] = ixyz1;
+						mp_source_fractions[cell * 8 + 2] = ixy1z;
+						mp_source_fractions[cell * 8 + 3] = ix1yz;
+						mp_source_fractions[cell * 8 + 4] = ixy1z1;
+						mp_source_fractions[cell * 8 + 5] = ix1yz1;
+						mp_source_fractions[cell * 8 + 6] = ix1y1z;
+						mp_source_fractions[cell * 8 + 7] = ix1y1z1;
+
+						int zzz = Cell(ix, iy, iz);
+
+						mp_fraction[Cell(ix, iy, iz)] += ixyz;
+						mp_fraction[Cell(ix, iy, iz + 1)] += ixyz1;
+						mp_fraction[Cell(ix, iy + 1, iz)] += ixy1z;
+						mp_fraction[Cell(ix + 1, iy, iz)] += ix1yz;
+						mp_fraction[Cell(ix, iy + 1, iz + 1)] += ixy1z1;
+						mp_fraction[Cell(ix + 1, iy, iz + 1)] += ix1yz1;
+						mp_fraction[Cell(ix + 1, iy + 1, iz)] += ix1y1z;
+						mp_fraction[Cell(ix + 1, iy + 1, iz + 1)] += ix1y1z1;
 					}
 				}
 				else
@@ -1418,47 +1390,94 @@ void CFluid::ReverseAdvection(float *p_in, float*p_out, float scale)
 		if (cell1 != -1)
 		{
 			// Get the four fractional amounts we earlier interpolated
-			float ia = mp_source_fractions[cell * 4 + 0];  // Using "cell", not "cell1", as it's an array of four values
-			float ib = mp_source_fractions[cell * 4 + 1];  // and not the grid of four
-			float ic = mp_source_fractions[cell * 4 + 2];
-			float id = mp_source_fractions[cell * 4 + 3];
+			
+
+			float ixyz   =   mp_source_fractions[cell * 8 + 0];
+			float ixyz1  =   mp_source_fractions[cell * 8 + 1] ;
+			float ixy1z  =   mp_source_fractions[cell * 8 + 2] ;
+			float ix1yz  =   mp_source_fractions[cell * 8 + 3] ;
+			float ixy1z1 =   mp_source_fractions[cell * 8 + 4];
+			float ix1yz1 =   mp_source_fractions[cell * 8 + 5];
+			float ix1y1z =   mp_source_fractions[cell * 8 + 6];
+			float ix1y1z1 =  mp_source_fractions[cell * 8 + 7] ;
+
+
 			// get the TOTAL fraction requested from each source cell
-			float fa = mp_fraction[cell1];
-			float fb = mp_fraction[cell1 + 1];
-			float fc = mp_fraction[cell1 + m_w];
-			float fd = mp_fraction[cell1 + 1 + m_w];
+			//float fa = mp_fraction[cell1];
+			//float fb = mp_fraction[cell1 + 1];
+			//float fc = mp_fraction[cell1 + m_w];
+			//float fd = mp_fraction[cell1 + 1 + m_w];
+			int cell2 = cell1;
+
+			int iz = cell2 / (m_w*m_h);
+			cell2 %= m_d*m_w;
+			int ix = cell2 % m_w;
+			cell2 /= m_w;
+			int iy = cell2;
+			
+																								
+			float fxyz   	=					mp_fraction[Cell(ix, iy, iz)            ] 		  ;
+			float fxyz1  	=					mp_fraction[Cell(ix, iy, iz + 1)        ] 		  ;
+			float fxy1z  	=					mp_fraction[Cell(ix, iy + 1, iz)        ] 		  ;
+			float fx1yz  	=					mp_fraction[Cell(ix + 1, iy, iz)        ] 		  ;
+			float fxy1z1 	=					mp_fraction[Cell(ix, iy + 1, iz + 1)    ] 		  ;
+			float fx1yz1 	=					mp_fraction[Cell(ix + 1, iy, iz + 1)    ] 		  ;
+			float fx1y1z 	=					mp_fraction[Cell(ix + 1, iy + 1, iz)    ] 		  ;
+			float fx1y1z1	=					mp_fraction[Cell(ix + 1, iy + 1, iz + 1)] 		  ;
+
+
+
 			// if less then 1.0 in total, we can have all we want
-#if 1
-			if (fa<1.0f) fa = 1.0f;
-			if (fb<1.0f) fb = 1.0f;
-			if (fc<1.0f) fc = 1.0f;
-			if (fd<1.0f) fd = 1.0f;
-#else
-			// DON'T DO THIS!!!
-			// THis is a patch, since is fa is zero then ia will be zero
-			// The idea is to ensure ALL of the cells a,b,c,d go somewhere.  
-			// But it leads to artifacts.
-			if (fa == 0.0f) fa = 1.0f;
-			if (fb == 0.0f) fb = 1.0f;
-			if (fc == 0.0f) fc = 1.0f;
-			if (fd == 0.0f) fd = 1.0f;
-#endif
+
+			if (fxyz   <1.0f) fxyz = 1.0f;
+			if (fxyz1  <1.0f) fxyz1 = 1.0f;
+			if (fxy1z  <1.0f) fxy1z = 1.0f;
+			if (fx1yz  <1.0f) fx1yz = 1.0f;
+			if (fxy1z1 <1.0f) fxy1z1 = 1.0f;
+			if (fx1yz1 <1.0f) fx1yz1 = 1.0f;
+			if (fx1y1z <1.0f) fx1y1z = 1.0f;
+			if (fx1y1z1<1.0f) fx1y1z1 = 1.0f;
+
 			// scale the amount we are transferring
-			ia /= fa;
-			ib /= fb;
-			ic /= fc;
-			id /= fd;
+			ixyz /= fxyz;
+			ixyz1 /= fxyz1;
+			ixy1z /= fxy1z;
+			ix1yz /= fx1yz;
+			ixy1z1 /= fxy1z1;
+			ix1yz1 /= fx1yz1;
+			ix1y1z /= fx1y1z;
+			ix1y1z1 /= fx1y1z1;
 			// Give the fraction of the original source, do not alter the original
 			// So we are taking fractions from p_in, but not altering those values
 			// as they are used again by later cells
 			// if the field were mass conserving, then we could simply move the value
 			// but if we try that we lose mass
-			p_out[cell] += ia * p_in[cell1] + ib * p_in[cell1 + 1] + ic * p_in[cell1 + m_w] + id * p_in[cell1 + 1 + m_w];
+			//p_out[cell] += ia * p_in[] + ib * p_in[cell1 + 1] + ic * p_in[cell1 + m_w] + id * p_in[cell1 + 1 + m_w];
+
+			p_out[cell] += (ixyz		  * p_in[Cell(ix, iy, iz)] +
+				ixyz1				  * p_in[Cell(ix, iy, iz + 1)] +
+				ixy1z				  * p_in[Cell(ix, iy + 1, iz)] +
+				ix1yz				  * p_in[Cell(ix + 1, iy, iz)] +
+				ixy1z1				  * p_in[Cell(ix, iy + 1, iz + 1)] +
+				ix1yz1				  * p_in[Cell(ix + 1, iy, iz + 1)] +
+				ix1y1z				  * p_in[Cell(ix + 1, iy + 1, iz)] +
+				ix1y1z1				  * p_in[Cell(ix + 1, iy + 1, iz + 1)]);
+
+
 			// The accounting happens here, the values we added to the dest in p1 are subtracted from the soruces in p1
-			p_out[cell1] -= ia * p_in[cell1];
-			p_out[cell1 + 1] -= ib * p_in[cell1 + 1];
-			p_out[cell1 + m_w] -= ic * p_in[cell1 + m_w];
-			p_out[cell1 + m_w + 1] -= id * p_in[cell1 + m_w + 1];
+			//p_out[cell1] -= ia * p_in[];
+			//p_out[cell1 + 1] -= ib * p_in[cell1 + 1];
+			//p_out[cell1 + m_w] -= ic * p_in[cell1 + m_w];
+			//p_out[cell1 + m_w + 1] -= id * p_in[cell1 + m_w + 1];
+																																		  ;
+							p_out[Cell(ix, iy, iz)] -= ixyz								 * p_in[Cell(ix, iy, iz)]						  ;
+							p_out[Cell(ix, iy, iz + 1)] -= ixyz1						 * p_in[Cell(ix, iy, iz + 1)]					  ;
+							p_out[Cell(ix, iy + 1, iz)] -= ixy1z						 * p_in[Cell(ix, iy + 1, iz)]					  ;
+							p_out[Cell(ix + 1, iy, iz)] -= ix1yz						 * p_in[Cell(ix + 1, iy, iz)]					  ;
+							p_out[Cell(ix, iy + 1, iz + 1)] -= ixy1z1					 * p_in[Cell(ix, iy + 1, iz + 1)]				  ;
+							p_out[Cell(ix + 1, iy, iz + 1)] -= ix1yz1					 * p_in[Cell(ix + 1, iy, iz + 1)]				  ;
+							p_out[Cell(ix + 1, iy + 1, iz)] -= ix1y1z					 * p_in[Cell(ix + 1, iy + 1, iz)]				  ;
+							p_out[Cell(ix + 1, iy + 1, iz + 1)] -= ix1y1z1				 * p_in[Cell(ix + 1, iy + 1, iz + 1)]			  ;
 
 		}
 	}
@@ -1488,7 +1507,26 @@ void CFluid::ReverseSignedAdvection(float *p_in, float*p_out, float scale)
 			float vx = mp_xv0[cell];
 			float vy = mp_yv0[cell];
 			float vz = mp_zv0[cell];
-			if (vx != 0.0f || vy != 0.0f)
+			float step = 0.25;
+					if (vx > step) {
+						vx = step;
+					}
+					if (vy > step) {
+						vy = step;
+					}
+					if (vz > step) {
+						vz = step;
+					}
+					if (vz < -1*step) {
+						vz = -1*step;
+					}
+					if (vx < -1 * step) {
+						vx = -1 * step;
+					}
+					if (vy < -1 * step) {
+						vy = -1 * step;
+					}
+			if (vx != 0.0f || vy != 0.0f || vz != 0.0f)
 			{
 				float x1 = x + vx * a;
 				float y1 = y + vy * a;
@@ -1502,18 +1540,44 @@ void CFluid::ReverseSignedAdvection(float *p_in, float*p_out, float scale)
 				float fz = z1 - (int)z1;
 
 				// Get amounts from (in) source cells
-				float ia = (1.0f - fy)*(1.0f - fx) * p_in[cell1];
+		/*		float ia = (1.0f - fy)*(1.0f - fx) * p_in[cell1];
 				float ib = (1.0f - fy)*(fx)* p_in[cell1 + 1];
 				float ic = (fy)     *(1.0f - fx) * p_in[cell1 + m_w];
-				float id = (fy)     *(fx)* p_in[cell1 + m_w + 1];
+				float id = (fy)     *(fx)* p_in[cell1 + m_w + 1];*/
 
-				// add to (out) dest cell
-				p_out[cell] += ia + ib + ic + id;
-				// and subtract from (out) dest cells
-				p_out[cell1] -= ia;
-				p_out[cell1 + 1] -= ib;
-				p_out[cell1 + m_w] -= ic;
-				p_out[cell1 + m_w + 1] -= id;
+				int ix = (int)x1;
+				int iy = (int)y1;
+				int iz = (int)z1;
+
+				float ixyz = (1.0f - fx)*(1.0f - fy)*(1.0f - fz) * p_in[Cell(ix, iy, iz)];
+				float ixyz1 = (1.0f - fx)*(1.0f - fy)*(fz)*        p_in[Cell(ix, iy, iz + 1)];
+				float ixy1z = (1.0f - fx)*(fy)*(1.0f - fz)*        p_in[Cell(ix, iy + 1, iz)];
+				float ix1yz = (fx)*(1.0f - fy)*(1.0f - fz)*        p_in[Cell(ix + 1, iy, iz)];
+				float ixy1z1 = (1.0f - fx)*(fy)*(fz)*              p_in[Cell(ix, iy + 1, iz + 1)];
+				float ix1yz1 = (fx)*(1.0f - fy)*(fz)*              p_in[Cell(ix + 1, iy, iz + 1)];
+				float ix1y1z = (fx)*(fy)*(1.0f - fz) *             p_in[Cell(ix + 1, iy + 1, iz)];
+				float ix1y1z1 = (fx)*(fy)*(fz)*                    p_in[Cell(ix + 1, iy + 1, iz + 1)];
+
+
+				//// add to (out) dest cell
+				//p_out[cell] += ia + ib + ic + id;
+				//// and subtract from (out) dest cells
+				//p_out[cell1] -= ia;
+				//p_out[cell1 + 1] -= ib;
+				//p_out[cell1 + m_w] -= ic;
+				//p_out[cell1 + m_w + 1] -= id;
+
+
+				p_out[cell] += (ixyz + ixyz1 + ixy1z + ix1yz + ix1yz + ix1yz1 + ix1y1z + ix1y1z1);
+				// Then add them to the four destination cells
+				p_out[Cell(ix, iy, iz)] -= ixyz;
+				p_out[Cell(ix, iy, iz + 1)] -= ixyz1;
+				p_out[Cell(ix, iy + 1, iz)] -= ixy1z;
+				p_out[Cell(ix + 1, iy, iz)] -= ix1yz;
+				p_out[Cell(ix, iy + 1, iz + 1)] -= ixy1z1;
+				p_out[Cell(ix + 1, iy, iz + 1)] -= ix1yz1;
+				p_out[Cell(ix + 1, iy + 1, iz)] -= ix1y1z;
+				p_out[Cell(ix + 1, iy + 1, iz + 1)] -= ix1y1z1;
 				}
 			}
 		}
@@ -1561,6 +1625,25 @@ void CFluid::ForwardAdvection(float *p_in, float*p_out, float scale)
 					float z1 = z + vz * a;
 					Collide(x, y, z, x1, y1, z1);
 
+					float step = 0.25;
+					if (vx > step) {
+						vx = step;
+					}
+					if (vy > step) {
+						vy = step;
+					}
+					if (vz > step) {
+						vz = step;
+					}
+					if (vz < -1*step) {
+						vz = -1*step;
+					}
+					if (vx < -1 * step) {
+						vx = -1 * step;
+					}
+					if (vy < -1 * step) {
+						vy = -1 * step;
+					}
 					int ix = (int)x1;
 					int iy = (int)y1;
 					int iz = (int)z1;
@@ -1598,6 +1681,7 @@ void CFluid::ForwardAdvection(float *p_in, float*p_out, float scale)
 					float ix1y1z = (fx)*(fy)*(1.0f - fz) * in;
 					float ix1y1z1 = (fx)*(fy)*(fz)* in;
 
+					
 					// Subtract them from the source cell
 					p_out[cell] -= (ixyz + ixyz1 + ixy1z + ix1yz + ix1yz + ix1yz1 + ix1y1z + ix1y1z1);
 					// Then add them to the four destination cells
@@ -1616,208 +1700,7 @@ void CFluid::ForwardAdvection(float *p_in, float*p_out, float scale)
 	}
 }
 
-// Move part of a scalar along the velocity field
-// Intended to spread pressure along velocity lines
-void CFluid::PartialForwardAdvection(float *p_in, float*p_out, float scale, float partial)
-{
-	// Pressure differential between points  
-	// to get an accelleration force.
-	float a = m_dt * scale;
 
-	int w = m_w;
-	int h = m_h;
-	int d = m_d;
-
-	// First copy the values
-	CopyField(p_in, p_out);
-
-	if (scale == 0.0f)
-		return;
-
-
-	// We advect all cells
-	for (int x = 0; x < w; x++)
-	{
-		for (int y = 0; y < h; y++)
-		{
-			for (int z = 0; z < d; z++)
-			{
-				int cell = Cell(x, y, z);
-				float vx = mp_xv0[cell];
-				float vy = mp_yv0[cell];
-				float vz = mp_zv0[cell];
-
-
-				if (vx != 0.0f || vy != 0.0f || vz != 0.0f)
-				{
-					float x1 = x + vx * a;
-					float y1 = y + vy * a;
-					float z1 = z + vz * a;
-					Collide(x, y, z, x1, y1, z1);
-
-					int ix = (int)x1;
-					int iy = (int)y1;
-					int iz = (int)z1;
-
-
-					// get fractional parts
-					float fx = x1 - (int)x1;
-					float fy = y1 - (int)y1;
-					float fz = z1 - (int)z1;
-
-					// we are taking pressure from four cells (one of which might be the target cell
-					// and adding it to the target cell
-					// hence we need to subtract the appropiate amounts from each cell
-					//
-					// Cells are like
-					// 
-					//    A----B
-					//    |    |
-					//    |    |
-					//    C----D
-					// 
-					// (Should be square)
-					// so we work out the bilinear fraction at each of a,b,c,d
-
-					float in = p_in[cell];
-
-
-					float ixyz = (1.0f - fy)*(1.0f - fx)*(1.0f - fz) * in;
-					float ixyz1 = (1.0f - fy)*(1.0f - fx)*(fz)* in;
-					float ixy1z = (1.0f - fy)*(fx)*(1.0f - fz)* in;
-					float ix1yz = (fy)*(1.0f - fx)*(1.0f - fz)* in;
-
-					float ixy1z1 = (1.0f - fy)*(fx)*(fz)* in;
-					float ix1yz1 = (fy)*(1.0f - fx)*(fz)* in;
-					float ix1y1z = (fy)*(fx)*(fz)* in;
-					float ix1y1z1 = (fy)*(fx)*(fz)* in;
-
-					// Subtract them from the source cell
-					p_out[cell] -= (ixyz + ixyz1 + ixy1z + ix1yz + ix1yz + ix1yz1 + ix1y1z + ix1y1z1);
-					// Then add them to the four destination cells
-					p_out[Cell(ix, iy, iz)] += ixyz;
-					p_out[Cell(ix, iy, iz + 1)] += ixyz1;
-					p_out[Cell(ix, iy + 1, iz)] += ixy1z;
-					p_out[Cell(ix + 1, iy, iz)] += ix1yz;
-					p_out[Cell(ix, iy + 1, iz + 1)] += ixy1z1;
-					p_out[Cell(ix + 1, iy, iz + 1)] += ix1yz1;
-					p_out[Cell(ix + 1, iy + 1, iz)] += ix1y1z;
-					p_out[Cell(ix + 1, iy + 1, iz + 1)] += ix1y1z1;
-
-				}
-			}
-		}
-	}
-}
-
-
-void CFluid::BFECCForwardAdvection(float *p_in, float*p_out, float scale)
-{
-	// BFECC Algorithm from Flowfixer, Kim, et al.
-	// mp_bfecc = Advect( v,p_in) 
-	// p_out = Advect(-v,mp_bfecc) 
-	// mp_bfecc = p_in + (p_in-p_out)/2  (Performed in 
-	// Return Advect(mp_bfecc,p_out)
-
-	// DOES NOT HELP WITH THE WAY I'M DOING THIGNS
-
-	ForwardAdvection(p_in, p_out, scale);           // Forwards
-	ForwardAdvection(p_out, mp_BFECC, -scale);	  // then backwards should give us the original
-	SubFields(p_in, mp_BFECC, mp_BFECC);			  // Subtract it gives us the error
-	MulField(mp_BFECC, 0.5f, mp_BFECC);			  // half the error
-	AddFields(p_in, mp_BFECC, mp_BFECC);			  // add to original
-	ForwardAdvection(mp_BFECC, p_out, scale);		  // and advect that
-
-
-
-}
-
-
-
-/**
-* Calculate the curl at position (i, j) in the fluid grid.
-* Physically this represents the vortex strength at the
-* cell. Computed as follows: w = (del x U) where U is the
-* velocity vector at (i, j).
-*
-**/
-
-float CFluid::Curl(int x, int y, int z)
-{
-	// difference in XV of cells above and below
-	// positive number is a counter-clockwise rotation
-	float x_curl = (mp_xv0[Cell(x, y + 1, z)] - mp_xv0[Cell(x, y - 1, z)]) * 0.5f;
-
-	// difference in YV of cells left and right
-	// positive number is a counter-clockwise rotation
-	float y_curl = (mp_yv0[Cell(x + 1, y, z)] - mp_yv0[Cell(x - 1, y, z)]) * 0.5f;
-
-
-	float z_curl = (mp_zv0[Cell(x, y, z +1)] - mp_zv0[Cell(x, y, z - 1)]) * 0.5f;
-
-	return x_curl - y_curl;
-}
-
-
-void CFluid::VorticityConfinement(float scale)
-{
-
-	ZeroEdge(mp_p1);
-	ZeroField(mp_xv1);
-	ZeroField(mp_yv1);
-	ZeroField(mp_zv1);
-
-
-	float *p_abs_curl = mp_p1;
-
-	for (int i = 1; i <= m_w - 1; i++)
-	{
-		for (int j = 1; j <= m_h - 1; j++)
-		{
-			for (int k = 1; k <= m_d - 1; k++)
-			{
-				p_abs_curl[Cell(i, j, k)] = fabs(Curl(i, j, k));
-			}
-		}
-	}
-
-	for (int x = 2; x < m_w - 1; x++)
-	{
-		for (int y = 2; y < m_h - 1; y++)
-		{
-			for (int z = 2; z < m_d - 1; z++)
-			{
-
-				int cell = Cell(x, y, z);
-				// get curl gradient across this cell, left right
-				float lr_curl = (p_abs_curl[cell + 1] - p_abs_curl[cell - 1]) * 0.5f;
-				// and up down
-				float ud_curl = (p_abs_curl[cell + m_w] - p_abs_curl[cell + m_h]) * 0.5f;
-				// front and back
-				float fb_curl = (p_abs_curl[cell + m_w*m_h] - p_abs_curl[cell + m_w*m_h]) * 0.5f;
-
-				// Normalize the derivitive curl vector
-				float length = (float)sqrtf(lr_curl * lr_curl + ud_curl * ud_curl + fb_curl * fb_curl) + 0.000001f;
-				lr_curl /= length;
-				ud_curl /= length;
-				fb_curl /= length;
-
-				// get the magnitude of the curl
-				float v = Curl(x, y, z);
-
-				// (lr,ud) would be perpendicular, so (-ud,lr) is tangential? 
-				mp_xv1[Cell(x, y, z)] = -ud_curl *  v;
-				mp_yv1[Cell(x, y, z)] = lr_curl *  v;
-				mp_zv1[Cell(x, y, z)] = fb_curl *  v;
-
-
-			}
-		}
-	}
-	ForceFrom(mp_xv1, mp_xv0, scale);
-	ForceFrom(mp_yv1, mp_yv0, scale);
-	ForceFrom(mp_zv1, mp_zv0, scale);
-}
 
 // Given a floating point position within the field, add to it 
 // with bilinear interpolation
@@ -1826,6 +1709,7 @@ void CFluid::AddValue(float *p_in, float x, float y, float z, float v)
 	if (x<0 || y<0 || z<0 || x>(float)m_w - 1.0001f || y>(float)m_h - 1.0001f || z>(float)m_d - 1.0001f)
 		return;
 
+	v = 1;	
 	// get fractional parts
 	float fx = x - (int)x;
 	float fy = y - (int)y;
@@ -1833,17 +1717,30 @@ void CFluid::AddValue(float *p_in, float x, float y, float z, float v)
 	// get the corner cell (a)
 	int cell = Cell((int)x, (int)y, (int)z);
 
-	// get fractions of the values for each target cell
-	float ia = (1.0f - fy)*(1.0f - fx) * v;
-	float ib = (1.0f - fy)*(fx)* v;
-	float ic = (fy)     *(1.0f - fx) * v;
-	float id = (fy)     *(fx)* v;
+	int ix = (int)x;
+	int iy = (int)y;
+	int iz = (int)z;
+
+	float ixyz    = (1.0f - fx)*(1.0f - fy)*(1.0f - fz) * v;
+	float ixyz1   = (1.0f - fx)*(1.0f - fy)*(fz)* v;
+	float ixy1z   = (1.0f - fx)*(fy)*(1.0f - fz)* v;
+	float ix1yz   = (fx)*(1.0f - fy)*(1.0f - fz)* v;
+	float ixy1z1  = (1.0f - fx)*(fy)*(fz)* v;
+	float ix1yz1  = (fx)*(1.0f - fy)*(fz)* v;
+	float ix1y1z  = (fx)*(fy)*(1.0f - fz) * v;
+	float ix1y1z1 = (fx)*(fy)*(fz)* v;
 
 	// Add into each cell
-	p_in[cell] += ia;
-	p_in[cell + 1] += ib;
-	p_in[cell + m_w] += ic;
-	p_in[cell + m_w + 1] += id;
+	p_in[Cell(ix, iy, iz)] += ixyz;
+	p_in[Cell(ix, iy, iz + 1)] += ixyz1;
+	p_in[Cell(ix, iy + 1, iz)] += ixy1z;
+	p_in[Cell(ix + 1, iy, iz)] += ix1yz;
+	p_in[Cell(ix, iy + 1, iz + 1)] += ixy1z1;
+	p_in[Cell(ix + 1, iy, iz + 1)] += ix1yz1;
+	p_in[Cell(ix + 1, iy + 1, iz)] += ix1y1z;
+	p_in[Cell(ix + 1, iy + 1, iz + 1)] += ix1y1z1;
+	
+
 }
 
 
@@ -1970,160 +1867,49 @@ void CFluid::Render(float x, float y, float w, float h)
 }
 
 
-// Update the fluid with a time step dt
+// Metoda obliczaj¹ca stan w nastêpnym kroku na podstawie poprzedniego, serce ca³ego algorytmu
 void CFluid::Update(float dt)
 {
-
-
-	static bool update = 1;
-
-	if (!update)
-		return;
-
-
-
-	// Time step stored locally per fluid system 
+	//ró¿nica czasu pomiêdzy krokami
 	m_dt = dt;
 
-
-
-
-	if (m_heat_force != 0.0f && !m_field_test)
-	{
-
+	// wp³yw temperatury na unoszenie siê dymu
 		ForceFrom(mp_heat0, mp_yv0, m_heat_force);
 
-		if (m_heat_friction_a != 0 || m_heat_friction_b != 0 || m_heat_friction_c != 0)
-			QuadraticDecay(mp_heat0, mp_heat0, m_heat_friction_a, m_heat_friction_b, m_heat_friction_c);
-	}
+	// naturalny rozk³ad ciep³a za pomoc¹ funkcji kwadratowej
+		QuadraticDecay(mp_heat0, mp_heat0, m_heat_friction_a, m_heat_friction_b, m_heat_friction_c);
 
-	//ApplyForce(mp_yv0,0.01f);
-	// Give a litte random force to the edges of the simulation
-	// just so things preturb a little
-	//EdgeForce(mp_xv0,rndf(0.01),-rndf(0.01),rndf(0.01),-rndf(0.01));
-	//EdgeForce(mp_yv0,rndf(0.001),-rndf(0.001),rndf(0.001),-rndf(0.001));
 
-	// Vorticity confinement is a cosmetic patch that accellerates the velocity
-	// field in a direction tangential to the curve defined by the surrounding points
-	if (m_vorticity != 0.0f)
-		VorticityConfinement(m_vorticity);
-
-	// No major diff if we swap the order of advancing pressure acc and friction forces
-	if (m_pressure_acc != 0.0f && !m_field_test)
-	{
+		//wp³yw ciœnienia (iloœæi dymu w komórce) na s¹siaduj¹ce komórki
 		PressureAcceleration(m_pressure_acc);
-	}
-	if (m_velocity_friction_a != 0.0f || m_velocity_friction_b != 0.0f || m_velocity_friction_c != 0.0f)
-	{
-		VelocityFriction(m_velocity_friction_a, m_velocity_friction_b, m_velocity_friction_c);
-	}
-
-	// Clamping Veclocity prevents problems when too much energy is introduced into the system
-	// it's not strictly necessary, and in fact leads to problems as it gives you a leading edge wave of
-	// constant velocity, which cannot dissipate
-	//	if (this == &g_fluid2)
-	//	ClampVelocity(0.2f);
-
-	float before_p = 0;
-	float tot_p = 0;
-
-	float v_tot = 0.0f;
-	float v_max = 0.0f;
-
-#if 1
-	for (int x0 = 0; x0<m_w; x0++)
-	{
-		for (int y0 = 0; y0 < m_h; y0++)
-		{
-			for (int z0 = 0; z0 < m_d; z0++)
-			{
-				int cell = Cell(x0, y0, z0);
-
-				before_p += mp_p0[cell];
-
-				Vector3 v = Vector3(mp_xv0[cell], mp_yv0[cell], mp_zv0[cell]);
-				float v_len = v.Length();
-				if (v_len > v_max)
-					v_max = v_len;
-				v_tot += v_len;
-			}
-		}
-	}
-#endif
-
-
-	// Advection step.  
-	// Forward advection works well in general, but does not handle the dissipation
-	// of single cells of pressure (or lines of cells).  
-	//
-	// Reverse advection does not handle self-advection of velocity without diffusion
-	// 
-	// Both?  Beautiful!!!
-
-	// Problems seems to be getting aswirly velocity field
-	// and the pressure accumulating at the edges
-	// and the artefacts of "ripples".  Or are they natural?
-	//
-	// Maybe try setting up a smoke source simulation, as that looks nice.
-
-	// The advection scale is needed for when we change grid sizes
-	// smaller grids mean large cells, so scale should be smaller
-	float advection_scale = m_w / 100.f;
-
-	advection_scale = 1;
 	
+		//skala si³y adwekcji
+	float advection_scale = m_w*m_h*m_d / 10000.f;
+
+
+
+	//zerowanie macierzy iloœæi dymu w nastêpnym kroku
 	SetField(mp_ink1, 1.0f);
 	ForwardAdvection(mp_ink1, mp_balance, m_ink_advection * advection_scale);
-	//if (this == &g_fluid2)
-	//{
-	// scaling the velocity by the advection balance actually 
-	// helps reduce the compressibility of the velocity field
-	// But not really in a useful way, as it's just reducing the energy at
-	// points that have high velocty
-	//		MulFields(mp_balance,mp_yv0,mp_yv0);
-	//		MulFields(mp_balance,mp_xv0,mp_xv0);
-	//}
 
 
-	// Advect the ink - ink is one fluid suspended in another, like smoke in air
 	ForwardAdvection(mp_ink0, mp_ink1, m_ink_advection * advection_scale);
 	swap(mp_ink0, mp_ink1);
 	ReverseAdvection(mp_ink0, mp_ink1, m_ink_advection * advection_scale);
 	swap(mp_ink0, mp_ink1);
 
-	// Only advect the heat if it is applying a force
-	if (m_heat_force != 0.0f)
-	{
+	
 		ForwardAdvection(mp_heat0, mp_heat1, m_heat_advection * advection_scale);
 		swap(mp_heat0, mp_heat1);
 		ReverseAdvection(mp_heat0, mp_heat1, m_heat_advection * advection_scale);
 		swap(mp_heat0, mp_heat1);
-	}
 
 
-	// Advection order makes very significant differences
-	// If presure is advected first, it leads to self-maintaining waves
-	// and ripple artifacts
-	// So the "velocity first" seems preferable as it naturally dissipates the waves
-	// By advecting the velocity first we advect the pressure using the next frames velocity
-	//
-
-	if (!m_field_test)
-	{
-
-#if 1
-		// Self advect the velocity via three buffers (if reverse advecting)
-		// buffers are 0,1 and 2
-		// our current velocity is in 0
-		// we advec t 0 to 1 using 0
-		// we the  advect 1 to 2 using 0 again
-		// then swap 2 into 0 so it becomes the new current velocity
 		ForwardAdvection(mp_xv0, mp_xv1, m_velocity_advection * advection_scale);
 		ForwardAdvection(mp_yv0, mp_yv1, m_velocity_advection * advection_scale);
 		ForwardAdvection(mp_zv0, mp_zv1, m_velocity_advection * advection_scale);
 
-		// Advect from 1 into 2, then swap 0 and 2
-		// We can use signed reverse advection as quantities can be negative.
+
 		ReverseSignedAdvection(mp_xv1, mp_xv2, m_velocity_advection * advection_scale);
 		ReverseSignedAdvection(mp_yv1, mp_yv2, m_velocity_advection * advection_scale);
 		ReverseSignedAdvection(mp_zv1, mp_zv2, m_velocity_advection * advection_scale);
@@ -2131,215 +1917,11 @@ void CFluid::Update(float dt)
 		swap(mp_yv2, mp_yv0);
 		swap(mp_zv2, mp_zv0);
 
-		// handle velocities at the edge, confining them to within the cells.
-		// Not needed with correct edge sampling and pressure, as edge pressure will turn the vel
-		// But since we have several 
-		//if (m_pressure_acc == 0.0f || this == &g_fluid1)
-		//{
-		//	ZeroEdge(mp_xv0);
-		//	ZeroEdge(mp_yv0);
-		//	ZeroEdge(mp_p0);
-		EdgeVelocities();
-		//}
-#endif
-	}
-	// Advect the pressure, representing the compressible fluid (like the air)
-
 	ForwardAdvection(mp_p0, mp_p1, m_pressure_advection * advection_scale);
 	swap(mp_p0, mp_p1);
 
 	ReverseAdvection(mp_p0, mp_p1, m_pressure_advection * advection_scale);
 	swap(mp_p0, mp_p1);
-
-
-
-}
-
-
-//void CFluid::MouseInput()
-//{
-//
-//	// hack in some mouse stuff here
-//
-//	int x = (mouse_x - m_screen_x) / (m_screen_w / m_w);
-//	if (x < 1) x = 1;
-//	if (x > m_w - 1) x = m_w - 2;
-//	int y = (mouse_y - m_screen_y) / (m_screen_h / m_h);
-//	if (y < 1) y = 1;
-//	if (y > m_h - 1) y = m_h - 2;
-//
-//	int z = 0;
-//
-//
-//
-//#if 0
-//	Vector3 center = Vector3(50, 50)*(m_screen_w / m_w);
-//	Vector3 p1 = center;
-//	float radius = 100;
-//	Vector3 start = Vector3(8, 8)*(m_screen_w / m_w);
-//	Vector3 end = Vector3(x, y)*(m_screen_w / m_w);
-//
-//	char bufx[1000];
-//	sprintf(bufx, "(%f,%f)", end.x, end.y);
-//	DrawString(200, 20, bufx, 0xff00ff00);
-//
-//	start = start - p1;
-//	end = end - p1;
-//	Vector3 p2;
-//	if (LineCircleIntersect(start, end, radius, p1, p2))
-//	{
-//		// p2 is the collision point, still in relative coordinates
-//		// so we need to reflect start->end about 0->p2
-//		// we already know that p2 is on the circle, so we have its length alreadys
-//
-//		Vector3 p2_to_end = end - p2;
-//		Vector3 reflection_axis = p2 / radius;
-//		float p2_to_end_outwards = DotProduct(p2_to_end, reflection_axis);
-//		// Adjust the end point
-//		end = end - reflection_axis * p2_to_end_outwards * 2.0f;
-//		// And finally return the absolute coordinates
-//		//		x1 = end.x;
-//		//		y1 = end.y;
-//		DrawLine(p2 + center, end + center, 0xffffffff);
-//	}
-//#endif
-//
-//#if 0
-//	if (dragging)
-//	{
-//		mp_p0[Cell(x, y)] += 1.0f;
-//		if (mp_p0[Cell(x, y)]>10.0f)
-//			mp_p0[Cell(x, y)] = 10.0f;
-//	}
-//#endif
-//	if (dragging || r_dragging)
-//	{
-//		if (m_init)
-//		{
-//			Vector3 v = Vector3(x - m_last_x, y - m_last_y, 0 - m_last_z) * 0.05f;
-//#if 1
-//			float f_step = 0.025f; // steps along the stroke
-//			float r_step = 0.05f; // steps across circle
-//			float step_scale = f_step*r_step*r_step;
-//			for (float f = 0.0f; f< 1.0f; f += f_step)
-//			{
-//				float xc = m_last_x + f *(x - m_last_x);
-//				float yc = m_last_y + f *(y - m_last_y);
-//				for (float x0 = -1.0f; x0 < 1.0f; x0 += r_step)
-//				{
-//					for (float y0 = -1.0f; y0<1.0f; y0 += r_step)
-//					{
-//						// get coords relative to the center
-//						float rr = sqrtf(x0*x0 + y0*y0);
-//						if (rr<1.0f)
-//						{
-//							// inside the circle
-//							Vector3 tangent = Vector3(y0, -x0, z);
-//							tangent = tangent.Normal();
-//
-//							if (rr == 0.0f) rr = r_step;
-//							tangent = tangent*rr / 10.0f;
-//							{
-//								float r_drag = 0.06f * m_w;
-//								float drag = 5.0f;
-//								if (r_dragging)
-//								{
-//									AddValue(mp_xv0, x0*r_drag + xc, y0*r_drag + yc, v.x*step_scale*drag);
-//									AddValue(mp_yv0, x0*r_drag + xc, y0*r_drag + yc, v.y*step_scale*drag);
-//								}
-//
-//								if (dragging)
-//								{
-//									//AddValue(mp_p0,x0*5+xc,y0*5+yc,-0.020*(1.0f-rr)*step_scale);
-//
-//									// add some velocity
-//									//if (this == &g_fluid2)
-//									if (!m_field_test)
-//									{
-//										AddValue(mp_yv0, x0 + xc, y0 + yc, -0.60*(1.0f - rr)*step_scale);
-//									}
-//									// and some ink
-//
-//									float r_ink = 0.001f * m_w;
-//									float r_heat = 0.001f * m_w;
-//									float r_pressure = 0.1f * m_w;
-//									float ink = 0.1f * m_w;
-//									float heat = 0.1f * m_w;
-//
-//									AddValue(mp_ink0, x0*r_ink + xc, y0*r_ink + yc, ink*(1.0f)*step_scale);
-//									AddValue(mp_heat0, x0*r_heat + xc, y0*r_heat + yc, heat*(1.0f)*step_scale);
-//									//AddValue(mp_ink0,x0*r_ink+xc,y0*r_ink+yc,ink*(1.0f-rr)*step_scale);
-//									//AddValue(mp_heat0,x0*r_heat+xc,y0*r_heat+yc,heat*(1.0f-rr)*step_scale);
-//
-//
-//									//AddValue(mp_p0,x0*r_pressure+xc,y0*r_pressure+yc,heat*(1.0f-rr)*step_scale);
-//									//AddValue(mp_ink0,xc,yc,0.050*(r-rr)*step_scale);
-//
-//								}
-//							}
-//						}
-//					}
-//				}
-//			}
-//#else
-//			mp_xv0[Cell(x, y)] = 20.0f;
-//#endif
-//
-//
-//		}
-//		m_init = 1;
-//		m_last_x = x;
-//		m_last_y = y;
-//		m_last_z = z;
-//	}
-//	else
-//	{
-//		m_init = 0;
-//	}
-//}
-
-
-char  printf_buffer[1024];
-
-void    debug_log(const char* text, ...)
-{
-	EnterCriticalSection(&debug_CS);
-
-	// Get Text into a printable buffer	 (maybe prepend time)
-	va_list args;
-	va_start(args, text);
-	vsprintf_s(printf_buffer, text, args);
-	va_end(args);
-	// output as debug text
-	OutputDebugString(printf_buffer);
-
-	LeaveCriticalSection(&debug_CS);
-
-}
-
-float game_time = 0.0f;
-
-static bool paused = false;
-
-void MX_Logic(float time)
-{
-	static float last_time = 0.0f;
-
-	float timestep = time - last_time;
-
-	if (timestep > 0.25f) timestep = 0.25f;
-
-	last_time = time;
-
-	if (paused)
-	{
-	}
-	else
-	{
-		//game_time += timestep;
-		game_time = Timer_Seconds();
-	}
-
 }
 
 
@@ -2372,48 +1954,35 @@ void InitFluids()
 									 // the high factor friction (a) wich is applied to the square of the velocity,
 									 // acts as a smooth limit to velocity, which causes streams to break up into turbulent flow 
 									 // The c term will make things stop, which then shows up our border artefacts
-									 // but a high enough (>0.01) c term is needed to stop things just dissipating too fast
-#if 0
-									 // Friction is dt*(a*v^2 + b*v + c)
-	g_fluid1.m_velocity_friction_a = 0.80f;
-	g_fluid1.m_velocity_friction_b = 0.03f;
-	g_fluid1.m_velocity_friction_c = 0.001f;  // 0.01f is nice for stopping things 
-#else
+								 // but a high enough (>0.01) c term is needed to stop things just dissipating too fast
+						 // Friction is dt*(a*v^2 + b*v + c)
+
 	g_fluid1.m_velocity_friction_a = 0.0f;
 	g_fluid1.m_velocity_friction_b = 0.0f;
 	g_fluid1.m_velocity_friction_c = 0.0f;
-#endif
+
 
 	g_fluid1.m_vorticity = 0.0f;
 
 	// Pressure accelleration.  Larger values (>0.5) are more realistic (like water)
 	// values that are too large lead to chaotic waves
-	g_fluid1.m_pressure_acc = 2; // 2.0 worked well for smoke-like stuff
+	g_fluid1.m_pressure_acc = 0.02; // 2.0 worked well for smoke-like stuff
 
 								 // upwards force applied by ink
-#if 0
-								 // ink heats itself
-	g_fluid1.m_ink_heat = -0.1f;
-	g_fluid1.m_heat_force = 0.0f; //-0.1f;
-#else
+
 								 // heat follows ink in advection, but is a seperate scalar value
 	g_fluid1.m_ink_heat = 0.0f;
 	g_fluid1.m_heat_force = -0.1f; //-0.1f;
-#endif
-	g_fluid1.m_heat_friction_a = 0.5f;
+	g_fluid1.m_heat_friction_a = 1.5f;
 	g_fluid1.m_heat_friction_b = 0.2f;
 	g_fluid1.m_heat_friction_c = 0.01f;
-#if 0
-	g_fluid1.m_velocity_advection = 140.0f;
-	g_fluid1.m_pressure_advection = 10.0f;
-#else
+
 	// high ink advection allows fast moving nice swirlys
 	g_fluid1.m_ink_advection = 150.0f;
 	// seems nice if both velocity and pressure at same value, which makes sense
 	g_fluid1.m_velocity_advection = 150.0f;
 	g_fluid1.m_pressure_advection = 150.0f;  // 130, lag behind, to allow vel to dissipate???
 	g_fluid1.m_heat_advection = 150.0f;
-#endif
 
 	//////////////////////////////////////////////////////////////
 
@@ -2421,12 +1990,6 @@ void InitFluids()
 
 	g_fluid1.Init(size, size, size);
 
-#if 0
-	// test with a static velocity field
-	g_fluid1.m_field_test = 1;
-	g_fluid1.SetField(g_fluid1.mp_xv0, -0.1f);ddddd
-	g_fluid1.SetField(g_fluid1.mp_yv0, -0.1f);
-#endif
 
 }
 MSG msg;
@@ -2445,8 +2008,8 @@ void TestApp::Update(float dt)
 	//}
 
 	//wartosc
-	g_fluid1.AddValue(g_fluid1.mp_ink0, size /2, size -4, size /2, 20);
-	g_fluid1.AddValue(g_fluid1.mp_heat0, size /2, size -4, size /2, 400);
+	g_fluid1.AddValue(g_fluid1.mp_ink0, 25, 25, 25, 45);
+	g_fluid1.AddValue(g_fluid1.mp_heat0, 25, 25, 25, 45);
 	//g_fluid1.mp_yv0[g_fluid1.Cell(size / 2, size - 4, size / 2)] = 10;
 
 	//g_fluid1.AddValue(g_fluid1.mp_xv0, size, size, size / 2, 0.04f);
@@ -2464,19 +2027,12 @@ void TestApp::Update(float dt)
 
 
 
-if (has_focus)
-			{
-			
-				float fluid_start1 = Timer_Seconds();
+
 				if (!key_a) {
 					g_fluid1.Update(0.02f);
 				}
 			
-			}
-			else
-			{
-				Sleep(1);
-			}
+
 
 	g_fluid1.Render(0, 0, size, size);
 
