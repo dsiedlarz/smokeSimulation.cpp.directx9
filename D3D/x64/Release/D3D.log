@@ -1,4 +1,6 @@
-﻿  winmain.cpp
+﻿  D3DApp.cpp
+D3DApp.cpp(92): warning C4838: conversion from 'unsigned int' to 'LONG' requires a narrowing conversion
+  winmain.cpp
 winmain.cpp(36): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
 winmain.cpp(37): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
 winmain.cpp(1008): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
@@ -20,9 +22,9 @@ winmain.cpp(1576): warning C4244: 'argument': conversion from 'const int' to 'fl
 winmain.cpp(1577): warning C4244: 'argument': conversion from 'const int' to 'float', possible loss of data
 winmain.cpp(1589): warning C4244: 'argument': conversion from 'const int' to 'float', possible loss of data
   Generating code
-  17 of 378 functions ( 4.5%) were compiled, the rest were copied from previous compilation.
+  140 of 378 functions (37.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    3 functions had inline decision re-evaluated but remain unchanged
+    2 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   D3D.vcxproj -> C:\Users\Dawid\documents\visual studio 2015\Projects\D3D\x64\Release\D3D.exe
   D3D.vcxproj -> C:\Users\Dawid\documents\visual studio 2015\Projects\D3D\x64\Release\D3D.pdb (Full PDB)

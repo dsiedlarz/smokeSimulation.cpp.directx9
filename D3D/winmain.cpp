@@ -1576,7 +1576,7 @@ void TestApp::Update(float dt)
 	g_fluid1.AddValue(g_fluid1.mp_ink0, generatorX + 1, generatorY + 2, generatorZ + 3, generatorInk);
 	g_fluid1.AddValue(g_fluid1.mp_heat0, generatorX + 1, generatorY + 2, generatorZ + 3, generatorHeat);
 
-
+	//wiatr
 	g_fluid1.AddValue(g_fluid1.mp_zv0, sizeX/2, sizeY/2, sizeZ / 2, 1.0f);
 
 
