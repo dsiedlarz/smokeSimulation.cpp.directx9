@@ -27,7 +27,7 @@
 CRITICAL_SECTION	debug_CS;
 
 //config 
-int const size = 140;
+int const size = 75;
 int const sizeX = size;
 int const sizeY = size;
 int const sizeZ = size;
@@ -35,8 +35,8 @@ int const sizeZ = size;
 int const generatorX = sizeX /2;
 int const generatorY = sizeX * 0.9;
 int const generatorZ = sizeZ*0.9;
-int const generatorInk = 10;
-int const generatorHeat = 10;
+int const generatorInk = 1;
+int const generatorHeat = 1;
 
 
 //DIRECTX struktura odzworowuj¹ca punkt w przestrzeci wraz z jego kolorem.
@@ -1575,6 +1575,9 @@ void TestApp::Update(float dt)
 
 	g_fluid1.AddValue(g_fluid1.mp_ink0, generatorX + 1, generatorY + 2, generatorZ + 3, generatorInk);
 	g_fluid1.AddValue(g_fluid1.mp_heat0, generatorX + 1, generatorY + 2, generatorZ + 3, generatorHeat);
+
+
+	g_fluid1.AddValue(g_fluid1.mp_zv0, sizeX/2, sizeY/2, sizeZ / 2, 1.0f);
 
 
 	if (!key_a) {
